@@ -6,7 +6,8 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 import logging
 
-from core.handlers.callback import update_last_message
+from core.database.models import *
+from core.handlers.callback import *
 from core.handlers.user_commands import start
 from core.keyboards.reply import cancel
 
@@ -21,7 +22,7 @@ class FAQ(StatesGroup):
 
 
 @router.callback_query(F.data == 'order')
-async def order(query: CallbackQuery, state: FSMContext):
+async def order(query: CallbackQuery, bot: Bot):
     sent_message = await query.message.answer(
         f'Чтобы заказать бота заполните небольшую анкету и '
         f'мы с вами свяжемся для обсуждения дальнейших шагов',
@@ -29,11 +30,11 @@ async def order(query: CallbackQuery, state: FSMContext):
     )
 
     await query.answer()
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 @router.callback_query(F.data == 'contacts')
-async def contacts(query: CallbackQuery, state: FSMContext):
+async def contacts(query: CallbackQuery, bot: Bot):
 
     site = "botnest.ru"
     email = "info@botnest.ru"
@@ -48,18 +49,17 @@ async def contacts(query: CallbackQuery, state: FSMContext):
     )
 
     await query.answer()
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
-
-    # Вызов функции update_last_message с корректным chat_id
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 @router.callback_query(F.data == 'faq')
-async def enter_faq(query: CallbackQuery, state: FSMContext):
+async def enter_faq(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(FAQ.waiting_for_question)
 
-    sent_message = await query.message.answer("Вы в режиме FAQ. Задайте свой вопрос или нажмите 'Отмена' для выхода.", reply_markup=cancel)
+    sent_message = await query.message.answer("Вы в режиме FAQ. Задайте свой вопрос или нажмите 'Отмена' для выхода.",
+                                              reply_markup=inline_builder(cancel_faq))
 
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 @router.message(FAQ.waiting_for_question, F.text)
@@ -77,8 +77,9 @@ async def process_question(message: Message, bot: Bot, state: FSMContext):
         # Если ответ пустой или None, отправляем сообщение-заглушку
         response_text = "Извините, у меня пока нет ответа на этот вопрос."
 
-    await message.answer(response_text)
-
+    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+    sent_message = await message.answer(response_text, reply_markup=inline_builder(cancel_faq))
+    await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
 
 # @router.message(F.text == 'Отмена', FAQ.waiting_for_question)
 # async def cancel_faq(message: Message, state: FSMContext):

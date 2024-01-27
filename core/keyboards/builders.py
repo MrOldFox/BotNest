@@ -42,6 +42,10 @@ order_menu = [
     [['Назад', 'main_menu']]
 ]
 
+cancel_faq = [
+    [['Отмена', 'main_menu']]
+]
+
 contact_menu = [
     [['Написать в телеграм', {'url': 'test.ru'}]],
     [['Назад', 'main_menu']]

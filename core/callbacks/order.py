@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_session
 
 from core.database.models import async_session, User, OrderRequest
-from core.handlers.callback import update_last_message
+from core.handlers.callback import *
 from core.handlers.user_commands import start
 from core.keyboards.builders import cancel_order, inline_builder
 from core.keyboards.reply import cancel

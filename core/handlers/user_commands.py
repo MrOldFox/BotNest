@@ -9,7 +9,7 @@ from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.filters import Command, CommandObject, CommandStart, state, or_f
 from sqlalchemy import select
 
-from core.handlers.callback import update_last_message
+from core.handlers.callback import *
 from core.keyboards.builders import *
 from core.keyboards.inline import *
 from core.database.models import async_session, User
@@ -50,10 +50,8 @@ async def start(message: Union[Message, CallbackQuery], bot: Bot, state: FSMCont
         reply_markup=main_menu_markup
     )
 
-    # Вызов функции update_last_message
-    await update_last_message(bot, state, chat_id, sent_message.message_id)
-
-
+    # Вызов функции update_last_message_id
+    await update_last_message_id(bot, sent_message.message_id, telegram_id)
 
 # @router.message(CommandStart())
 # @router.callback_query(F.data == 'main_menu')

@@ -1,13 +1,13 @@
 
 import asyncio
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.filters import or_f, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import CallbackQuery, Message
 
-from core.handlers.callback import update_last_message
+from core.handlers.callback import *
 from core.projects.games.lostorder.callbacks.gamefunctions import choose_path
 from core.projects.games.lostorder.callbacks.rolldice import *
 from core.projects.games.lostorder.keyboards.builder import *
@@ -35,7 +35,7 @@ router = Router()
 
 # Начало игры
 @router.callback_query(F.data == 'lost_order')
-async def start_game(query: CallbackQuery, state: FSMContext):
+async def start_game(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(GameStates.Introduction)
     text = (
         "<b>Легенда Потерянного Ордена</b> \n\n"
@@ -59,12 +59,12 @@ async def start_game(query: CallbackQuery, state: FSMContext):
     )
 
     # Вызов функции update_last_message
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 # 1 сцена
 @router.callback_query(F.data == 'start_game')
-async def start_game(query: CallbackQuery, state: FSMContext):
+async def start_game(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(GameStates.Introduction)
     text = (
         "Ты стоишь на древнем распутье, где судьбы разделяются.\n"
@@ -88,12 +88,12 @@ async def start_game(query: CallbackQuery, state: FSMContext):
     )
 
     # Вызов функции update_last_message
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 # Сцена при выборе леса
 @router.callback_query(F.data == 'forest')
-async def start_game(query: CallbackQuery, state: FSMContext):
+async def start_game(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(GameStates.Forest)
     text = (
         "Проходя через лес, ты чувствуешь, что не один, ты слышишь звук раздвигаемых ветвей "
@@ -113,11 +113,11 @@ async def start_game(query: CallbackQuery, state: FSMContext):
     )
     await query.answer()
     # Вызов функции update_last_message
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 @router.callback_query(GameStates.Forest, F.data == 'dice')
-async def order(query: CallbackQuery, state: FSMContext):
+async def order(query: CallbackQuery, state: FSMContext, bot: Bot):
     dice_message = await query.message.answer_dice()
 
     dice_value = dice_message.dice.value
@@ -142,11 +142,11 @@ async def order(query: CallbackQuery, state: FSMContext):
         await state.set_state(GameStates.ForestBattle)
 
     await query.answer()
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 @router.callback_query(GameStates.ForestBattle, F.data == 'dice')
-async def start_combat(query: CallbackQuery, state: FSMContext):
+async def start_combat(query: CallbackQuery, state: FSMContext, bot: Bot) -> None:
     message = await query.message.answer_dice()
     dice_value = message.dice.value
     success = await check_dice_result(dice_value)
@@ -168,11 +168,11 @@ async def start_combat(query: CallbackQuery, state: FSMContext):
         sent_message = await choose_path(text, image_path2, query, EnemyAttack)
         await state.set_state(CombatStates.EnemyAttack)
 
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 @router.callback_query(CombatStates.EnemyAttack, F.data == 'defense')
-async def player_attack(query: CallbackQuery, state: FSMContext):
+async def player_attack(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(CombatStates.RollingForDefense)
     enemy_attack_value = randint(1, 5)
     await state.update_data(enemy_attack_value=enemy_attack_value)
@@ -192,11 +192,11 @@ async def player_attack(query: CallbackQuery, state: FSMContext):
     sent_message = await choose_path(text, image_path, query, RollDice)
 
     await query.answer()
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 @router.callback_query(CombatStates.RollingForDefense, F.data == 'dice')
-async def defense(query: CallbackQuery, state: FSMContext):
+async def defense(query: CallbackQuery, state: FSMContext, bot: Bot):
     message = await query.message.answer_dice()
     await asyncio.sleep(4)
     data = await state.get_data()
@@ -221,12 +221,12 @@ async def defense(query: CallbackQuery, state: FSMContext):
         await state.set_state(CombatStates.RollingForDefense)
 
     await query.answer()
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 # Сцена при выборе леса
 @router.callback_query(F.data == 'river')
-async def exploring_river(query: CallbackQuery, state: FSMContext):
+async def exploring_river(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(GameStates.Encounter)
     text = (
         "Ты выбираешь путь вдоль реки. На поверхности еле виднеется "
@@ -241,12 +241,12 @@ async def exploring_river(query: CallbackQuery, state: FSMContext):
     sent_message = await choose_path(text, image_path, query, RiverEncounter)
 
     await query.answer()
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 # Сцена при выборе леса
 @router.callback_query(GameStates.Encounter, F.data == 'start_encounter')
-async def exploring_river(query: CallbackQuery, state: FSMContext):
+async def exploring_river(query: CallbackQuery, state: FSMContext, bot: Bot) -> None:
     await state.set_state(GameStates.DiceRoll)
     text = (
         "Ты подходишь к рыбаку и замечаешь его измученный вид. Он кажется встревоженным и истощенным, "
@@ -265,11 +265,11 @@ async def exploring_river(query: CallbackQuery, state: FSMContext):
     sent_message = await choose_path(text, image_path, query, ToVillage)
 
     await query.answer()
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
 @router.callback_query(F.data == 'village')
-async def exploring_river(query: CallbackQuery, state: FSMContext):
+async def exploring_river(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(GameStates.DiceRoll)
     text = (
         "Ты продвигаешь дальше, пока не обнаруживаешь заброшенную деревню.\n\n"
@@ -286,4 +286,4 @@ async def exploring_river(query: CallbackQuery, state: FSMContext):
     sent_message = await choose_path(text, image_path, query, VillagePath)
 
     await query.answer()
-    await update_last_message(query.bot, state, query.message.chat.id, sent_message.message_id)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
