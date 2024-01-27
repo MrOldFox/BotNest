@@ -33,6 +33,61 @@ async def order(query: CallbackQuery, bot: Bot):
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
+@router.callback_query(F.data == 'bot_examples')
+async def bot_examples(query: CallbackQuery, bot: Bot):
+    sent_message = await query.message.answer(
+        f'Вы можете ознакомиться с примером наших ботов'
+        f', чтобы лучше определить, какой типа вам больше подойдет',
+        reply_markup=inline_builder(examples_type)
+    )
+
+    await query.answer()
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+
+
+@router.callback_query(F.data == 'game_examples')
+async def game_examples(query: CallbackQuery, bot: Bot):
+    sent_message = await query.message.answer(
+        f'Вы можете ознакомиться с примером наших ботов'
+        f', чтобы лучше определить, какой типа вам больше подойдет',
+        reply_markup=inline_builder(games_type)
+    )
+
+    await query.answer()
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+
+
+
+@router.callback_query(F.data == 'fin_trigger')
+async def fin_trigger(query: CallbackQuery, bot: Bot):
+    text = (
+        "<b>Сетевая игра - Final Trigger</b> \n\n"
+        "Испытай свою удачу в напряженной игре русской рулетки с уникальным игровым ботом - Final Trigger! Сразитесь с "
+        "соперником, у кого из вас больше смелости и удачи.\n\n"
+        "Ваша задача - выжить в серии раундов, где смертельная угроза скрыта в каждом выстреле. Используйте стратегию и"
+        " интуицию, чтобы выбирать между риском для себя или атакой противника. Каждый раунд - новый набор патронов, "
+        "каждый ход - важное решение. Победитель - тот, кто останется в живых.\n\n"
+        "<i>Данная игра создана для будущей реализации в рамках расширения проектов BotNest\n\n"
+        "Даная игра хорошо демонстрирует возможности создания сетевых игр в Telegram: "
+        "в ней есть система рейтинга, система внутриигровой валюты и игрового магазина.\n\n"
+        "Вы можете заказать разработку сетевой игры по своим требованиям и желаниям.</i>"
+    )
+
+    # Путь к изображению или URL
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/game/finaltrigger/Final_Trigger.png'
+
+    # Отправка изображения с подписью и инлайн-клавиатурой
+    sent_message = await query.bot.send_photo(
+        query.message.chat.id,
+        photo=image_path,  # Или просто строка с URL изображения
+        caption=text,
+        reply_markup=inline_builder(final_trigger)
+    )
+
+    # Вызов функции update_last_message
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+
+
 @router.callback_query(F.data == 'contacts')
 async def contacts(query: CallbackQuery, bot: Bot):
 

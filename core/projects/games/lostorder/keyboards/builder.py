@@ -2,7 +2,7 @@ from typing import Union, List
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
+from core.handlers.callback import *
 
 def inline_builder(button_layout: List[List[Union[str, List]]]) -> InlineKeyboardMarkup:
     inline_keyboard = []
@@ -43,7 +43,7 @@ RollDice = [
 
 StartGame = [
     [['Начать игру', 'start_game']],
-    [['Выйти', 'main_menu']]
+    [['Назад', 'game_examples']]
 ]
 
 ChoosingPath = [
@@ -69,6 +69,6 @@ Quit = [
 ]
 
 VillagePath = [
-    [['Заказать бота', 'make_order'], ['Контакты', 'contacts']],
+    [['Заказать бота', 'make_order']],
     [['Начать сначала', 'start_game'], ['Главное меню', 'main_menu']]
 ]

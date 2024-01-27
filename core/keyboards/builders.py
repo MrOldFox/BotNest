@@ -34,7 +34,7 @@ def inline_builder(button_layout: List[List[Union[str, List]]]) -> InlineKeyboar
 
 main_menu = [
     [['Заказать', 'order'], ['FAQ', 'faq']],
-    [['Примеры ботов', 'lost_order'], ['Контакты', 'contacts']]
+    [['Примеры ботов', 'bot_examples'], ['Контакты', 'contacts']]
 ]
 
 order_menu = [
@@ -56,6 +56,22 @@ cancel_order = [
 ]
 
 share_phone = [
-    [['Поделиться контактом', 'share_phone']],
-    [['Отмена', 'cancel_order']]
+    [['Поделиться контактом', 'share_phone']]
+]
+
+examples_type = [
+    [['Искусственный интеллект', 'order'], ['Информационные боты', 'contacts']],
+    [['Игровые боты', 'game_examples'], ['Магазины', 'faq']],
+    [['Назад', 'main_menu']]
+]
+
+games_type = [
+    [['Одиночная игра - Lost Order', 'lost_order']],
+    [['Сетевая игра - Final Trigger', 'fin_trigger']],
+    [['Назад', 'main_menu']]
+]
+
+final_trigger = [
+    [['Начать игру', {'url': 'https://t.me/FinalTriggerBot'}]],
+    [['Назад', 'game_examples']]
 ]
