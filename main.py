@@ -9,6 +9,7 @@ from core.database.models import async_main
 
 from core.handlers import bot_messages, user_commands
 from core.callbacks import pagination, navigation, order
+from core.projects.AI.callbacks import ai_assistant, ai_navigation
 from core.projects.games.lostorder.callbacks import rolldice
 from core.projects.games.lostorder.handlers import gamenavigation
 
@@ -35,7 +36,9 @@ async def main():
         bot_messages.router,
         order.router,
         gamenavigation.router,
-        rolldice.router
+        rolldice.router,
+        ai_assistant.router,
+        ai_navigation.router,
     )
 
     await bot.delete_webhook(drop_pending_updates=True)

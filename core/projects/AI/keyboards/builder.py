@@ -32,46 +32,11 @@ def inline_builder(button_layout: List[List[Union[str, List]]]) -> InlineKeyboar
     return markup
 
 
-main_menu = [
-    [['Заказать', 'order'], ['FAQ', 'faq']],
-    [['Примеры ботов', 'bot_examples'], ['Контакты', 'contacts']]
+order = [
+    [['Да', 'order'], ['Нет', 'quit']]
 ]
 
-order_menu = [
-    [['Сделать заказ', 'make_order']],
-    [['Назад', 'main_menu']]
-]
 
-cancel_faq = [
-    [['Отмена', 'main_menu']]
-]
-
-contact_menu = [
-    [['Написать в телеграм', {'url': 'test.ru'}]],
-    [['Назад', 'main_menu']]
-]
-
-cancel_order = [
-    [['Отмена', 'cancel_order']]
-]
-
-share_phone = [
-    [['Поделиться контактом', 'share_phone']]
-]
-
-examples_type = [
-    [['Искусственный интеллект', 'ai_ass'], ['Информационные боты', 'contacts']],
-    [['Игровые боты', 'game_examples'], ['Магазины', 'faq']],
-    [['Назад', 'main_menu']]
-]
-
-games_type = [
-    [['Одиночная игра - Lost Order', 'lost_order']],
-    [['Сетевая игра - Final Trigger', 'fin_trigger']],
-    [['Назад', 'main_menu']]
-]
-
-final_trigger = [
-    [['Начать игру', {'url': 'https://t.me/FinalTriggerBot'}]],
-    [['Назад', 'game_examples']]
+quit_ai = [
+    [['Выйти', 'main_menu']]
 ]
