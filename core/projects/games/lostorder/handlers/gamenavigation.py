@@ -63,7 +63,7 @@ async def start_game(query: CallbackQuery, state: FSMContext, bot: Bot):
 
 
 # 1 сцена
-@router.callback_query(F.data == 'final_trigger')
+@router.callback_query(F.data == 'start_game')
 async def final_trigger(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(GameStates.Introduction)
     text = (
