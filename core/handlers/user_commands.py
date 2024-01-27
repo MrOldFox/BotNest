@@ -22,7 +22,8 @@ router = Router()
 @router.callback_query(F.data == 'main_menu')
 async def start(message: Union[Message, CallbackQuery], bot: Bot, state: FSMContext):
     telegram_id = message.from_user.id
-
+    if state:
+        await state.clear()
     async with async_session() as session:
         # Проверяем, есть ли уже такой пользователь
         result = await session.execute(select(User).where(User.telegram_id == telegram_id))
