@@ -40,7 +40,7 @@ async def process_ai_question(message: Message, bot: Bot, state: FSMContext):
         # Установка ограничений для размера ответа и температуры
         temperature = 0.4  # Пример для умеренной творческой свободы
 
-        chat = openai.ChatCompletion.create(
+        chat = openai.chat.completions.create(
             model='gpt-3.5-turbo',
             messages=prompt,
             temperature=temperature

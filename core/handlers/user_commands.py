@@ -24,6 +24,8 @@ async def start(message: Union[Message, CallbackQuery], bot: Bot, state: FSMCont
     telegram_id = message.from_user.id
     if state:
         await state.clear()
+    else:
+        pass
     async with async_session() as session:
         # Проверяем, есть ли уже такой пользователь
         result = await session.execute(select(User).where(User.telegram_id == telegram_id))
