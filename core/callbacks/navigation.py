@@ -1,10 +1,14 @@
 import requests
 from aiogram import Bot, Router, F, types
 from aiogram.filters import Command
+
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove, WebAppInfo
 import logging
+
+
+from aiohttp import web
 
 from core.database.models import *
 from core.handlers.callback import *
@@ -23,6 +27,8 @@ class FAQ(StatesGroup):
 
 @router.callback_query(F.data == 'order')
 async def order(query: CallbackQuery, bot: Bot):
+    # markup = types.InlineKeyboardMarkup()
+    # markup.add(types.InlineKeyboardButton(text='Заполнить заявку', web_app=WebAppInfo(url='https://botnest.ru/wp-content/uploads/2024/botnest/order.html')))
     sent_message = await query.message.answer(
         f'Чтобы заказать бота заполните небольшую анкету и '
         f'мы с вами свяжемся для обсуждения дальнейших шагов',

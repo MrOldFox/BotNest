@@ -1,6 +1,6 @@
 from typing import Union, List
 
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
@@ -17,6 +17,8 @@ def inline_builder(button_layout: List[List[Union[str, List]]]) -> InlineKeyboar
             if isinstance(data, dict):
                 if 'url' in data:
                     button = InlineKeyboardButton(text=text, url=data['url'])
+                if 'web_app' in data:
+                    button = InlineKeyboardButton(text=text, web_app=WebAppInfo(url=data['web_app']))
                 elif 'callback_data' in data:
                     button = InlineKeyboardButton(text=text, callback_data=data['callback_data'])
                 else:
@@ -38,7 +40,7 @@ main_menu = [
 ]
 
 order_menu = [
-    [['Сделать заказ', 'make_order']],
+    [['Сделать заказ', {'web_app': 'https://botnest.ru/wp-content/uploads/2024/botnest/order.html'}]],
     [['Назад', 'main_menu']]
 ]
 
