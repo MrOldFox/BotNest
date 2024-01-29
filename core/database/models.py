@@ -10,11 +10,13 @@ from sqlalchemy import (
     Column, Integer, String, DateTime, func
 )
 
+from config_reader import config
+
 # Строка подключения к базе данных PostgreSQL
-DATABASE_URL = "postgresql+asyncpg://postgres:Admin777777@localhost:5432/botnest"
+database_url = config.database_url.get_secret_value()
 
 # Создание асинхронного движка
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(database_url, echo=True)
 
 # Создание асинхронной фабрики сессий
 async_session = async_sessionmaker(
