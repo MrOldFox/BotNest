@@ -1,3 +1,5 @@
+import json
+
 import requests
 from aiogram import Bot, Router, F, types
 from aiogram.filters import Command
@@ -10,11 +12,10 @@ import logging
 
 from aiohttp import web
 
-from core.database.models import *
-from core.handlers.callback import *
-from core.handlers.user_commands import start
-from core.keyboards.reply import cancel
 
+from core.database.models import OrderRequest, UserRole
+from core.handlers.user_commands import *
+from core.keyboards.reply import *
 router = Router()
 
 from core.keyboards.builders import *
@@ -27,16 +28,73 @@ class FAQ(StatesGroup):
 
 @router.callback_query(F.data == 'order')
 async def order(query: CallbackQuery, bot: Bot):
-    # markup = types.InlineKeyboardMarkup()
-    # markup.add(types.InlineKeyboardButton(text='Заполнить заявку', web_app=WebAppInfo(url='https://botnest.ru/wp-content/uploads/2024/botnest/order.html')))
+    # markup = types.ReplyKeyboardMarkup(keyboard=order_keyboard)
     sent_message = await query.message.answer(
         f'Чтобы заказать бота заполните небольшую анкету и '
         f'мы с вами свяжемся для обсуждения дальнейших шагов',
-        reply_markup=inline_builder(order_menu)
-    )
+        reply_markup=order_keyboard)
 
     await query.answer()
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+
+@router.message(F.web_app_data)
+async def web_order(message: Message, bot: Bot):
+
+    res = json.loads(message.web_app_data.data)
+    sent_message = await message.answer(f'Спасибо {res["name"]}, мы свяжемся с вами в ближайшее время')
+    await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
+
+    # Создайте сессию с вашей базой данных
+    async with async_session() as session:
+        # Выполнение запроса
+        result = await session.execute(select(User).where(User.telegram_id == message.from_user.id))
+
+        # Получение первого результата (если он есть)
+        user = result.scalar()
+        if user:
+            # Пользователь найден, создаем запись в order_requests с user.id
+            order_request = OrderRequest(
+                user_id=user.id,
+                phone=res["phone"],
+                email=res["email"],
+                description=res["description"],
+                contact_via_telegram=res["contactViaTelegram"]
+            )
+            session.add(order_request)
+            await session.commit()
+
+            # Подготовка сообщения для администраторов и модераторов
+            contact_request = "Да" if res["contactViaTelegram"] else "Нет"
+            admin_message = (
+                f"Новая заявка от {res['name']}:\n"
+                f"Телефон: {res['phone']}\n"
+                f"Email: {res['email']}\n"
+                f"Описание: {res['description']}\n"
+                f"Связь через Telegram: {contact_request}"
+            )
+
+            await notify_admins_and_mods(bot, session, admin_message)
+
+        else:
+            await message.answer(f'Нажмите /start для регистрации')
+
+
+async def notify_admins_and_mods(bot, session, message, include_moderators=True):
+    # Определяем роли, которым нужно отправить сообщение
+    roles_to_notify = [UserRole.admin]
+    if include_moderators:
+        roles_to_notify.append(UserRole.moderator)
+
+    # Получение списка администраторов и, при необходимости, модераторов
+    admins_and_mods = await session.execute(select(User).where(User.role.in_(roles_to_notify)))
+    admins_and_mods = admins_and_mods.scalars().all()
+
+    # Отправка сообщений администраторам и модераторам
+    for admin_or_mod in admins_and_mods:
+        try:
+            await bot.send_message(admin_or_mod.telegram_id, message, parse_mode='HTML')
+        except Exception as e:
+            print(f"Не удалось отправить сообщение пользователю {admin_or_mod.telegram_id}: {e}")
 
 
 @router.callback_query(F.data == 'bot_examples')

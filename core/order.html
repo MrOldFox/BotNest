@@ -22,7 +22,6 @@
             background: var(--tg-theme-bg-color);
         }
 
-
         #main {
             width: 100%;
             padding: 20px;
@@ -77,8 +76,47 @@
             border-radius: 5px;
         }
 
+        input[type="checkbox"] {
+            width: auto; /* Сброс ширины для чекбокса */
+            margin: 0;
+            padding: 0;
+            border: none; /* Убрать рамку у чекбокса */
+        }
+
         input:focus {
             border-color: #db5d5d;
+        }
+
+        textarea {
+            width: 90%;
+            outline: none;
+            margin: 10px 5%;
+            padding: 15px 10px;
+            font-size: 14px;
+            border: 2px solid silver;
+            border-radius: 5px;
+        }
+
+        textarea:focus {
+            border-color: #db5d5d;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 5%;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 5%;
+        }
+
+        .checkbox-container label {
+            margin-left: 10px; /* Отступ слева от чекбокса */
+            font-size: 14px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -90,10 +128,15 @@
         <button id="order">Заполнить</button>
     </div>
     <form id="form">
-        <input type="text" placeholder="Имя" id="user_name">
-        <input type="text" placeholder="Телефон" id="user_phone">
-        <input type="text" placeholder="Email" id="user_email">
-        <input type="text" placeholder="Описание бота" id="description">
+        <input type="text" placeholder="Имя" id="user_name" maxlength="50">
+        <input type="text" placeholder="Телефон" id="user_phone" maxlength="20">
+        <input type="text" placeholder="Email" id="user_email" maxlength="70">
+        <textarea placeholder="Описание бота" id="description" name="description" rows="5" maxlength="1000"></textarea>
+        <div class="checkbox-container">
+            <input type="checkbox" id="contact_via_telegram" name="contact_via_telegram">
+            <label for="contact_via_telegram">Свяжитесь со мной через Telegram</label>
+        </div>
+        <div id="error" style="color: #db5d5d"></div>
         <button id="send">Отправить</button>
     </form>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -109,7 +152,48 @@
         document.getElementById('user_name').value = tg.initDataUnsafe.user.first_name +" " + tg.user.initDataUnsafe.last_name;
     });
 
-    send.addEventListener('click', () => {
+    send.addEventListener('click', (e) => {
+        e.preventDefault(); // предотвратить отправку формы по умолчанию
+
+        let name = document.getElementById("user_name").value;
+        let email = document.getElementById("user_email").value;
+        let phone = document.getElementById("user_phone").value;
+        let description = document.getElementById("description").value;
+        let contactViaTelegram = document.getElementById("contact_via_telegram").checked;
+
+        // Проверка, что имя и описание не пустые
+        if (!name.trim()) {
+            document.getElementById('error').innerText = "Пожалуйста, укажите ваше Имя"
+            return;
+        }
+
+        if (!description.trim()) {
+            document.getElementById('error').innerText = "Пожалуйста, введите описание бота"
+            return;
+        }
+
+        // Проверка, что заполнено хотя бы одно из полей: Email или Телефон
+        if (!email.trim() && !phone.trim()) {
+            document.getElementById('error').innerText = "Пожалуйста, укажите ваш Email или Телефон"
+            return;
+        }
+
+        // Проверка формата Email, если он указан
+        if (email.trim() && !email.includes('@')) {
+            document.getElementById('error').innerText = "Некорректный Email"
+            return;
+        }
+
+        let data = {
+            name: name,
+            email: email,
+            phone: phone,
+            description: description,
+            contactViaTelegram: contactViaTelegram
+        }
+        tg.sendData(JSON.stringify(data))
+
+        // Здесь код для отправки данных формы
         tg.close();
     });
 </script>

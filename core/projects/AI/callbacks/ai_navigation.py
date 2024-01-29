@@ -9,8 +9,6 @@ import logging
 
 from core.database.models import *
 from core.handlers.callback import *
-from core.handlers.user_commands import start
-from core.keyboards.reply import cancel
 from core.projects.AI.callbacks.ai_assistant import create_chatgpt_prompt
 from core.projects.AI.keyboards.builder import inline_builder, quit_ai, order
 

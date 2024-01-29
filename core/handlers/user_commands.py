@@ -18,14 +18,16 @@ from core.database.models import async_session, User
 router = Router()
 
 
-@router.message(or_f(CommandStart(), F.text == "Старт"))
+@router.message(or_f(CommandStart(), F.text == "Старт", F.text == "Отмена"))
 @router.callback_query(F.data == 'main_menu')
 async def start(message: Union[Message, CallbackQuery], bot: Bot, state: FSMContext):
     telegram_id = message.from_user.id
     if state:
         await state.clear()
-    else:
-        pass
+
+    if not isinstance(message, CallbackQuery) and message.text == "Отмена":
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+
     async with async_session() as session:
         # Проверяем, есть ли уже такой пользователь
         result = await session.execute(select(User).where(User.telegram_id == telegram_id))

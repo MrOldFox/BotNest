@@ -1,13 +1,14 @@
 from aiogram.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
-    KeyboardButtonPollType
+    KeyboardButtonPollType, WebAppInfo
 )
 
-cancel = ReplyKeyboardMarkup(
+order_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="Отмена"),
+            KeyboardButton(text='Заполнить заявку', web_app=WebAppInfo(url='https://botnest.ru/wp-content/uploads/2024/botnest/order.html')),
+            KeyboardButton(text='Отмена'),
         ]
     ],
     resize_keyboard=True,
@@ -18,9 +19,7 @@ cancel = ReplyKeyboardMarkup(
 spec = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="Отправить гео", request_location=True),
-            KeyboardButton(text="Отправить контакт", request_contact=True),
-            KeyboardButton(text="Создать викторину", request_poll=KeyboardButtonPollType())
+            KeyboardButton(text="Заполнить анкету", request_location=True),
         ],
         [
             KeyboardButton(text="НАЗАД")
