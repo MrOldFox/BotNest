@@ -57,35 +57,3 @@ async def start(message: Union[Message, CallbackQuery], bot: Bot, state: FSMCont
 
     # Вызов функции update_last_message_id
     await update_last_message_id(bot, sent_message.message_id, telegram_id)
-
-# @router.message(CommandStart())
-# @router.callback_query(F.data == 'main_menu')
-# async def start(message: Union[Message, CallbackQuery], bot: Bot, state: FSMContext):
-#     global last_message_id
-#
-#     # Определение chat_id
-#     chat_id = message.message.chat.id if isinstance(message, CallbackQuery) else message.chat.id
-#
-#     # Удаление предыдущего сообщения, если оно существует
-#     if last_message_id:
-#         try:
-#             await bot.delete_message(chat_id, last_message_id)
-#         except Exception as e:
-#             print(f"Ошибка при удалении сообщения: {e}")
-#
-#     # Очистка состояния
-#     await state.clear()
-#
-#     # Создание и отправка главного меню
-#     main_menu_text = 'Добро пожаловать в BotNest'
-#     main_menu_markup = inline_builder(main_menu)  # Предполагается, что это функция создает ваше меню
-#
-#     # Отправка сообщения и обновление last_message_id
-#     sent_message = await bot.send_message(chat_id, main_menu_text, reply_markup=main_menu_markup)
-#     last_message_id = sent_message.message_id
-
-
-# @router.message(F.text == "Отмена")
-# async def cancel_faq(message: Message, state: FSMContext):
-#     await state.clear()
-#     await message.answer('Отмена')

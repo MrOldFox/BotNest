@@ -1,21 +1,13 @@
 import json
 
-import requests
-from aiogram import Bot, Router, F, types
-from aiogram.filters import Command
-
-from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove, WebAppInfo
+
 import logging
-
-
-from aiohttp import web
-
 
 from core.database.models import OrderRequest, UserRole
 from core.handlers.user_commands import *
 from core.keyboards.reply import *
+
 router = Router()
 
 from core.keyboards.builders import *
@@ -37,9 +29,9 @@ async def order(query: CallbackQuery, bot: Bot):
     await query.answer()
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
+
 @router.message(F.web_app_data)
 async def web_order(message: Message, bot: Bot):
-
     res = json.loads(message.web_app_data.data)
     sent_message = await message.answer(f'Спасибо {res["name"]}, мы свяжемся с вами в ближайшее время')
     await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
@@ -109,6 +101,26 @@ async def bot_examples(query: CallbackQuery, bot: Bot):
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
+@router.callback_query(F.data == 'info_type')
+async def info_type(query: CallbackQuery, bot: Bot):
+    response_text = (f'Вы можете ознакомиться с примером наших'
+                     f'чтобы лучше определить, какой типа вам больше подойдет')
+
+    await query_message(query, bot, response_text, examples_info)
+
+
+@router.callback_query(F.data == 'ai_types')
+async def ai_examples(query: CallbackQuery, bot: Bot):
+    sent_message = await query.message.answer(
+        f'Вы можете ознакомиться с примером ботов на ИИ'
+        f', чтобы лучше определить, какой типа вам больше подойдет',
+        reply_markup=inline_builder(ai_type)
+    )
+
+    await query.answer()
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+
+
 @router.callback_query(F.data == 'game_examples')
 async def game_examples(query: CallbackQuery, bot: Bot):
     sent_message = await query.message.answer(
@@ -119,7 +131,6 @@ async def game_examples(query: CallbackQuery, bot: Bot):
 
     await query.answer()
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
-
 
 
 @router.callback_query(F.data == 'fin_trigger')
@@ -154,10 +165,8 @@ async def fin_trigger(query: CallbackQuery, bot: Bot):
 
 @router.callback_query(F.data == 'contacts')
 async def contacts(query: CallbackQuery, bot: Bot):
-
     site = "botnest.ru"
     email = "info@botnest.ru"
-    tg = "ryzhkov_dv"
 
     sent_message = await query.message.answer(
         f'Вы можете связаться несколькими способами:\n\n'
@@ -200,22 +209,20 @@ async def process_question(message: Message, bot: Bot, state: FSMContext):
     sent_message = await message.answer(response_text, reply_markup=inline_builder(cancel_faq))
     await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
 
-# @router.message(F.text == 'Отмена', FAQ.waiting_for_question)
-# async def cancel_faq(message: Message, state: FSMContext):
-#     await state.clear()
-#     await message.answer("Вы вышли из режима FAQ.")
+
+async def query_message_photo(query: CallbackQuery, bot: Bot, text: str, image_path: str, inline_builder_key):
+    await query.answer()
+    sent_message = await query.bot.send_photo(
+        query.message.chat.id,
+        photo=image_path,
+        caption=text,
+        reply_markup=inline_builder(inline_builder_key)
+    )
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
+async def query_message(query: CallbackQuery, bot: Bot, text: str, inline_builder_key):
+    await query.answer()
+    sent_message = await query.message.answer(text, reply_markup=inline_builder(inline_builder_key))
 
-# @router.callback_query(F.data == 'info_tel')
-# async def info_tel(query: CallbackQuery, bot: Bot):
-#     button = InlineKeyboardButton(text="Назад", callback_data="contacts_from_info_tel")
-#     keyboard_back = InlineKeyboardMarkup(inline_keyboard=[[button]])
-#
-#     await query.message.delete()
-#     await query.answer()
-#     phone_number = "+79044951833"  # Пример телефонного номера
-#     first_name = "Дмитрий"  # Имя, которое будет отображаться
-#     await bot.send_contact(chat_id=query.from_user.id, phone_number=phone_number, first_name=first_name,
-#                            reply_markup=keyboard_back)
-
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)

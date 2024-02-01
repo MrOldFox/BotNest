@@ -17,7 +17,7 @@ def inline_builder(button_layout: List[List[Union[str, List]]]) -> InlineKeyboar
             if isinstance(data, dict):
                 if 'url' in data:
                     button = InlineKeyboardButton(text=text, url=data['url'])
-                if 'web_app' in data:
+                elif 'web_app' in data:
                     button = InlineKeyboardButton(text=text, web_app=WebAppInfo(url=data['web_app']))
                 elif 'callback_data' in data:
                     button = InlineKeyboardButton(text=text, callback_data=data['callback_data'])
@@ -49,7 +49,8 @@ cancel_faq = [
 ]
 
 contact_menu = [
-    [['Написать в телеграм', {'url': 'test.ru'}]],
+    [['Написать в телеграм', {'url': 'https://t.me/ryzkov_dv'}]],
+    [['Перейти на сайт', {'url': 'https://botnest.ru'}]],
     [['Назад', 'main_menu']]
 ]
 
@@ -62,9 +63,21 @@ share_phone = [
 ]
 
 examples_type = [
-    [['Искусственный интеллект', 'ai_ass'], ['Информационные боты', 'contacts']],
-    [['Игровые боты', 'game_examples'], ['Магазины', 'faq']],
+    [['ИИ боты', 'ai_types'], ['Информационные', 'info_type']],
+    [['Игровые', 'game_examples'], ['Для бизнеса', 'business_info']],
+    [['Инструменты', 'instruments']],
     [['Назад', 'main_menu']]
+]
+
+examples_info = [
+    [['Валюты и Акции', 'business_info']],
+    [['Назад', 'bot_examples']]
+]
+
+ai_type = [
+    [['ИИ-ассистент', 'ai_ass'], ['Генерация картинок', 'contacts']],
+    [['GigaChat', 'game_examples'], ['ChatGPT', 'faq']],
+    [['Назад', 'bot_examples']]
 ]
 
 games_type = [

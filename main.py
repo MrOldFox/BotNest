@@ -12,6 +12,7 @@ from core.callbacks import pagination, navigation, order
 from core.projects.AI.callbacks import ai_assistant, ai_navigation
 from core.projects.games.lostorder.callbacks import rolldice
 from core.projects.games.lostorder.handlers import gamenavigation
+from core.projects.info.business_info.callbacks import info_navigation
 
 from core.webhook.server import *
 
@@ -39,6 +40,7 @@ async def main():
         rolldice.router,
         ai_assistant.router,
         ai_navigation.router,
+        info_navigation.router,
     )
 
     await bot.delete_webhook(drop_pending_updates=True)
