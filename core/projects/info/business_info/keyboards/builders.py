@@ -1,7 +1,7 @@
 rate_info = [
     [['Курс валют', 'get_rates'], ['Курс криптовалют', 'get_crypto_rates']],
     [['Котировка акций', 'get_stock_prices']],
-    [['Назад', 'info_type']]
+    [['Назад', 'info_examples']]
 ]
 
 back = [

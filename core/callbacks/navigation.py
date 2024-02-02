@@ -101,15 +101,24 @@ async def bot_examples(query: CallbackQuery, bot: Bot):
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
-@router.callback_query(F.data == 'info_type')
-async def info_type(query: CallbackQuery, bot: Bot):
+
+@router.callback_query(F.data == 'business_examples')
+async def business_examples(query: CallbackQuery, bot: Bot):
     response_text = (f'Вы можете ознакомиться с примером наших'
                      f'чтобы лучше определить, какой типа вам больше подойдет')
 
-    await query_message(query, bot, response_text, examples_info)
+    await query_message(query, bot, response_text, business_type)
 
 
-@router.callback_query(F.data == 'ai_types')
+@router.callback_query(F.data == 'info_examples')
+async def info_examples(query: CallbackQuery, bot: Bot):
+    response_text = (f'Вы можете ознакомиться с примером наших'
+                     f'чтобы лучше определить, какой типа вам больше подойдет')
+
+    await query_message(query, bot, response_text, info_type)
+
+
+@router.callback_query(F.data == 'ai_examples')
 async def ai_examples(query: CallbackQuery, bot: Bot):
     sent_message = await query.message.answer(
         f'Вы можете ознакомиться с примером ботов на ИИ'

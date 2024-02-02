@@ -58,19 +58,20 @@ cancel_order = [
     [['Отмена', 'cancel_order']]
 ]
 
-share_phone = [
-    [['Поделиться контактом', 'share_phone']]
-]
-
 examples_type = [
-    [['ИИ боты', 'ai_types'], ['Информационные', 'info_type']],
-    [['Игровые', 'game_examples'], ['Для бизнеса', 'business_info']],
+    [['ИИ боты', 'ai_examples'], ['Информационные', 'info_examples']],
+    [['Игровые', 'game_examples'], ['Для бизнеса', 'business_examples']],
     [['Инструменты', 'instruments']],
     [['Назад', 'main_menu']]
 ]
 
-examples_info = [
+info_type = [
     [['Валюты и Акции', 'business_info']],
+    [['Назад', 'bot_examples']]
+]
+
+business_type = [
+    [['Магазин одежды', 'shop_main']],
     [['Назад', 'bot_examples']]
 ]
 
@@ -83,7 +84,7 @@ ai_type = [
 games_type = [
     [['Одиночная игра - Lost Order', 'lost_order']],
     [['Сетевая игра - Final Trigger', 'fin_trigger']],
-    [['Назад', 'main_menu']]
+    [['Назад', 'bot_examples']]
 ]
 
 final_trigger = [

@@ -1,9 +1,10 @@
 import datetime
 import enum
 
+
 import asyncpg
 
-from sqlalchemy import BigInteger, ForeignKey, Boolean, Enum
+from sqlalchemy import BigInteger, ForeignKey, Boolean, Enum, TIMESTAMP, DECIMAL, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column, DeclarativeBase
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine, AsyncSession
 from sqlalchemy import (
@@ -31,6 +32,7 @@ class UserRole(enum.Enum):
     user = "user"
     moderator = "moderator"
     admin = "admin"
+    customer = "customer"
 
 
 class User(Base):
@@ -53,6 +55,7 @@ class OrderRequest(Base):
     email = Column(String(50))  # Ограничение до 50 символов
     description = Column(String(1000))  # Ограничение до 1000 символов
     contact_via_telegram = Column(Boolean)
+
 
 
 async def async_main():

@@ -45,13 +45,14 @@ async def process_ai_question(message: Message, bot: Bot, state: FSMContext):
         )
 
         answer = chat.choices[0].message.content
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 
         # Проверка ответа и вызов callback-функции
         if "Для записи на услуги" in answer:
             sent_message = await message.answer("Хотите записаться на услугу?", reply_markup=inline_builder(order))
             await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
         else:
-            sent_message = await message.answer(answer)
+            sent_message = await message.answer(answer, reply_markup=inline_builder(quit_ai))
             await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
     except Exception as e:
         logging.error(e)
