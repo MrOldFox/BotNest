@@ -5,7 +5,7 @@ from core.projects.shops.handlers.sql import Database
 db = Database()
 
 shop_info = [
-    [['Каталог товаров', 'get_categories'], ['Поиск товаров', 'get_crypto_rates']],
+    [['Каталог товаров', 'get_categories'], ['Поиск товаров', 'get_categories']],
     [['Корзина', 'get_stock_prices'], ['История заказов', 'get_crypto_rates']],
     [['Акции', 'get_stock_prices'], ['Настройки', 'get_crypto_rates']],
     [['Назад', 'business_examples']]
