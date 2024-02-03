@@ -16,17 +16,18 @@ from core.projects.shops.handlers.sql import Database
 from core.projects.shops.keyboards.builders import *
 from aiogram.filters.callback_data import CallbackData
 
+image_main = 'https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/shop.webp'
 
 router = Router()
 
 @router.callback_query(F.data == 'shop_main')
 async def fin_trigger(query: CallbackQuery, bot: Bot):
     text = (
-        "<b>Магазин товаров</b> \n\n"
-        "Данный бот показывает пример реализации бота магазина одежды с полным рабочим функционалом:"
+        "<b>Магазин телефонов MobileNest</b> \n\n"
+        "Данный бот показывает пример реализации бота магазина мобильных телефонов с полным рабочим функционалом:"
         " карточки товаров, категории, корзина, покупка и доставка товара."
     )
-    image_path = 'https://botnest.ru/wp-content/uploads/2024/01/logot.png'
+    image_path = image_main
 
     await query_message_photo(query, bot, text, image_path, shop_info)
 
@@ -39,7 +40,7 @@ async def get_categories(query: CallbackQuery, bot: Bot):  # Создание э
         "<b>Выберите категорию товара:</b>"
     )
 
-    image_path = 'https://botnest.ru/wp-content/uploads/2024/01/logot.png'
+    image_path = image_main
 
     await query_message_photo(query, bot, text, image_path, category_menu)
 
@@ -55,7 +56,7 @@ async def paginate_categories(query: CallbackQuery, bot: Bot):
 
     # Обновляем сообщение с новым списком категорий и кнопками пагинации
     text = "<b>Выберите категорию товара:</b>"
-    image_path = 'https://botnest.ru/wp-content/uploads/2024/01/logot.png'
+    image_path = image_main
 
     await query_message_photo(query, bot, text, image_path, category_menu)
     await query.answer()
@@ -81,7 +82,7 @@ async def show_products_by_brand(query: CallbackQuery, bot: Bot):
 
     text = f"<b>Продукты бренда:</b>"
 
-    await query_message_photo(query, bot, text, "https://botnest.ru/wp-content/uploads/2024/01/logot.png", products_menu)
+    await query_message_photo(query, bot, text, "https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/apple-logo.jpg", products_menu)
     await query.answer()
 
 def get_product_keyboard(product_id: int, quantity: int, brand_slug: str, telegram_id: int):

@@ -230,6 +230,17 @@ async def query_message_photo(query: CallbackQuery, bot: Bot, text: str, image_p
     await query.answer()
 
 
+async def query_message_animation(query: CallbackQuery, bot: Bot, text: str, image_path: str, inline_builder_key):
+    sent_message = await query.bot.send_animation(
+        query.message.chat.id,
+        animation=image_path,
+        caption=text,
+        reply_markup=inline_builder(inline_builder_key)
+    )
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+    await query.answer()
+
+
 async def query_message(query: CallbackQuery, bot: Bot, text: str, inline_builder_key):
     sent_message = await query.message.answer(text, reply_markup=inline_builder(inline_builder_key))
 
