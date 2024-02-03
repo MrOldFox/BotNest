@@ -4,27 +4,35 @@ from sqlalchemy.orm import relationship
 from core.database.models import Base, engine
 
 
+class Brand(Base):
+    __tablename__ = 'brands'
+    brand_id = Column(Integer, primary_key=True)  # Уникальный идентификатор бренда
+    name = Column(String(255), nullable=False)  # Название бренда
+    description = Column(Text)  # Описание бренда
+    name_slug = Column(Text, nullable=False)  # Слаг проекта
+    # Обратная связь с продуктами
+    products = relationship("Product", back_populates="brand")
 
-class Category(Base):
-    __tablename__ = 'categories'
-    category_id = Column(Integer, primary_key=True)  # Уникальный идентификатор категории
-    name = Column(String(255), nullable=False)  # Название категории
-    description = Column(Text)  # Описание категории
-    products = relationship("Product", back_populates="category")
 
 class Product(Base):
     __tablename__ = 'products'
     product_id = Column(Integer, primary_key=True)  # Уникальный идентификатор товара
-    category_id = Column(Integer, ForeignKey('categories.category_id'), nullable=False)  # Ссылка на категорию
-    name = Column(String(255), nullable=False)  # Название товара
+    brand_id = Column(Integer, ForeignKey('brands.brand_id'), nullable=False)  # Ссылка на бренд
+    name = Column(String(255), nullable=False)  # Название модели телефона
     price = Column(DECIMAL(10, 2), nullable=False)  # Цена товара
     photo_url = Column(String(255))  # URL фотографии товара
-    color = Column(String(50))  # Цвет товара
-    size = Column(String(50))  # Размер товара
+    color = Column(String(50))  # Цвет корпуса
+    screen_size = Column(String(255))  # Размер экрана в дюймах
+    storage = Column(String(255))  # Встроенная память в ГБ
+    ram = Column(String(255))  # Оперативная память в ГБ
+    battery_capacity = Column(Integer)  # Ёмкость батареи в мАч
+    operating_system = Column(String(50))  # Операционная система
+    camera_resolution = Column(String(50))  # Разрешение камеры
     description = Column(Text)  # Описание товара
     stock_quantity = Column(Integer)  # Количество товара на складе
-    # Установка связи между товаром и его категорией
-    category = relationship("Category", back_populates="products")
+
+    # Установка связи между товаром и брендом
+    brand = relationship("Brand", back_populates="products")
 
 
 class Cart(Base):
