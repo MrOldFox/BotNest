@@ -31,7 +31,7 @@ class Database:
 
     async def get_brand_id_by_slug(self, brand_slug: str):
         async with async_session() as session:
-            query = select(Brand.brand_id).where(Brand.name_slug == brand_slug).order_by(Brand.name)
+            query = select(Brand.brand_id).where(Brand.name_slug == brand_slug)
             result = await session.execute(query)
             brand = result.scalar()
             return brand

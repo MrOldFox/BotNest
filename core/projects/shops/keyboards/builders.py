@@ -20,12 +20,15 @@ shop_back = [
 async def get_categories_menu(page: int = 0, items_per_page: int = 6):
     categories = await db.get_all_categories()  # Получение списка категорий
 
+    # Сортировка списка категорий от А до Я по имени
+    sorted_categories = sorted(categories, key=lambda category: category.name)
+
     # Вычисление начального и конечного индекса для текущей страницы
     start = page * items_per_page
     end = start + items_per_page
 
-    # Срез списка категорий для текущей страницы
-    page_categories = categories[start:end]
+    # Срез отсортированного списка категорий для текущей страницы
+    page_categories = sorted_categories[start:end]
 
     category_menu = []
     temp_list = []
@@ -44,11 +47,11 @@ async def get_categories_menu(page: int = 0, items_per_page: int = 6):
         category_menu.append(temp_list)
 
     # Добавляем кнопки управления страницами, если это необходимо
-    if len(categories) > items_per_page:
+    if len(sorted_categories) > items_per_page:
         navigation_buttons = []
         if page > 0:
             navigation_buttons.append(['⬅️ Назад', f'page_{page - 1}'])
-        if end < len(categories):
+        if end < len(sorted_categories):
             navigation_buttons.append(['Вперед ➡️', f'page_{page + 1}'])
         category_menu.extend([navigation_buttons])
 
