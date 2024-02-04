@@ -58,18 +58,27 @@ async def get_categories_menu(page: int = 0, items_per_page: int = 6):
 
 
 async def get_products_by_brand_menu(brand_slug: str, page: int = 0, items_per_page: int = 8):
-    # Предположим, что у вас есть функция для получения ID бренда по его slug
     brand_id = await db.get_brand_id_by_slug(brand_slug)
     products = await db.get_products_by_brand(brand_id, page, items_per_page)
 
+    color = False
     product_menu = []
     temp_list = []
 
     for product in products:
-        # Формируем пары [название продукта, callback_data для продукта]
-        temp_list.append([product.name, f"product_{product.product_id}"])
+        # Проверяем, сколько раз встречается продукт с таким именем в базе данных
+        product_count = await db.get_product_count_by_name(product.name)
 
-        if len(temp_list) == 2:
+        if product_count > 1:
+            # Если имя продукта встречается более одного раза, используем формат с color_
+            callback_data = f"color_{product.name}_{brand_slug}"
+        else:
+            # Если продукт уникален, используем формат с product_
+            callback_data = f"product_{product.product_id}_{brand_slug}_{color}"
+
+        temp_list.append([product.name, callback_data])
+
+        if len(temp_list) >= 2:
             product_menu.append(temp_list)
             temp_list = []
 
@@ -87,5 +96,30 @@ async def get_products_by_brand_menu(brand_slug: str, page: int = 0, items_per_p
         product_menu.append(navigation_buttons)
 
     product_menu.append([['Вернуться к брендам', 'get_categories']])
+
+    return product_menu
+
+
+async def get_products_by_color(product_name: str, brand_slug: str):
+    # product_id = await db.get_brand_id_by_slug(product_id)
+    products = await db.get_products_by_color(product_name)
+    brand_slug = await db.get_brand_slug_by_product_name(product_name)
+
+    color = True
+    product_menu = []
+    temp_list = []
+
+    for product in products:
+        # Формируем пары [название продукта, callback_data для продукта]
+        temp_list.append([product.color, f"product_{product.product_id}_{product.name}_{color}"])
+
+        if len(temp_list) == 2:
+            product_menu.append(temp_list)
+            temp_list = []
+
+    if temp_list:
+        product_menu.append(temp_list)
+
+    product_menu.append([['Вернуться к моделям', f'brand_{brand_slug}']])
 
     return product_menu

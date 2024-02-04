@@ -14,13 +14,12 @@ from core.projects.games.lostorder.callbacks import rolldice
 from core.projects.games.lostorder.handlers import gamenavigation
 from core.projects.info.business_info.callbacks import info_navigation
 from core.projects.shops.callbacks import shop_navigation
-from core.projects.shops.database.models import async_main_shop
+
 
 from core.webhook.server import *
 
 async def main():
     await async_main()
-    await async_main_shop()
     bot = Bot(config.bot_token.get_secret_value(), parse_mode="HTML")
     dp = Dispatcher()
 

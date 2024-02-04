@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, selectinload  # Убедитесь, что модели импортированы корректно
 
 from core.database.models import async_session
-from core.projects.shops.database.models import *
+from core.database.models import *
 
 
 class Database:
@@ -17,11 +17,17 @@ class Database:
             result = await session.execute(query)
             return result.scalars().first()
 
-    async def get_products_by_category(self, brand_id: int):
-        async with self.session() as session:
-            query = select(Product).where(Product.brand_id == brand_id)
+    async def get_products_by_name(self, product_name: str):
+        async with async_session() as session:
+            query = select(Product).where(Product.name == product_name)
             result = await session.execute(query)
-            return result.scalars().all()
+            return result.fetchall()
+
+    # async def get_products_by_category(self, brand_id: int):
+    #     async with self.session() as session:
+    #         query = select(Product).where(Product.brand_id == brand_id)
+    #         result = await session.execute(query)
+    #         return result.scalars().all()
 
     async def get_brand_id_by_slug(self, brand_slug: str):
         async with async_session() as session:
@@ -30,17 +36,68 @@ class Database:
             brand = result.scalar()
             return brand
 
+    async def get_brand_slug_by_product_name(self, product_name: str):
+        async with async_session() as session:
+            # Создаем запрос для выбора slug бренда на основе имени продукта
+            query = select(Brand.name_slug).join(Product).where(Product.name == product_name)
+            result = await session.execute(query)
+            brand_slug = result.scalar()
+            return brand_slug
+
+
+    async def get_products_by_color(self, product_name: str):
+        async with async_session() as session:
+            # Получаем все продукты указанного бренда без учета пагинации
+            query = select(Product).where(Product.name == product_name).order_by(Product.name)
+            all_products = await session.execute(query)
+            all_products = all_products.scalars().all()
+
+            return all_products
+
+    async def get_brand_photo_url_by_slug(self, brand_slug: str):
+        async with async_session() as session:
+            query = select(Brand.photo_url).where(Brand.name_slug == brand_slug)
+            result = await session.execute(query)
+            photo_url = result.scalar_one_or_none()  # Возвращает URL или None, если такого нет
+            return photo_url
+
+
+    async def get_product_count_by_name(self, product_name: str):
+        async with async_session() as session:
+            query = select(func.count()).where(Product.name == product_name)
+            result = await session.execute(query)
+            count = result.scalar_one_or_none()
+            return count if count is not None else 0
+
+    async def get_product_name_by_id(self, product_id: str):
+        async with async_session() as session:
+            query = select(Product.name).where(Product.product_id == product_id)
+            result = await session.execute(query)
+            product_name = result.scalar()
+            return product_name
+
+
     async def get_products_by_brand(self, brand_id: int, page: int = 0, items_per_page: int = 8):
         async with async_session() as session:
-            # Вычисляем смещение на основе номера страницы и количества элементов на странице
-            offset_value = page * items_per_page
+            # Получаем все продукты указанного бренда без учета пагинации
+            query = select(Product).where(Product.brand_id == brand_id).order_by(Product.name)
+            all_products = await session.execute(query)
+            all_products = all_products.scalars().all()
 
-            # Формируем запрос к БД для получения продуктов указанного бренда с учетом пагинации
-            query = select(Product).where(Product.brand_id == brand_id).offset(offset_value).limit(items_per_page)
-            result = await session.execute(query)
+            # Фильтруем уникальные имена продуктов
+            unique_products = []
+            seen_names = set()
+            for product in all_products:
+                if product.name not in seen_names:
+                    unique_products.append(product)
+                    seen_names.add(product.name)
 
-            # Возвращаем список продуктов
-            return result.scalars().all()
+            # Применяем пагинацию к уникальным продуктам
+            start_index = page * items_per_page
+            end_index = start_index + items_per_page
+            paginated_products = unique_products[start_index:end_index]
+
+            return paginated_products
 
     async def get_total_products_by_brand(self, brand_id: int):
         async with async_session() as session:
@@ -51,6 +108,23 @@ class Database:
             # Возвращаем количество продуктов бренда
             return result.scalar_one()
 
+    async def get_unique_product_names_count_by_brand(self, brand_id: int):
+        async with async_session() as session:
+            query = (
+                select(func.count(Product.name.distinct()))
+                .where(Product.brand_id == brand_id)
+            )
+            result = await session.execute(query)
+            return result.scalar_one()
+
+    async def get_total_products_by_color(self, product_name: str):
+        async with async_session() as session:
+            # Создаем запрос для подсчета количества продуктов определенного бренда
+            query = select(func.count()).select_from(Product).where(Product.name == product_name)
+            result = await session.execute(query)
+
+            # Возвращаем количество продуктов бренда
+            return result.scalar_one()
 
     async def get_all_categories(self):
         async with async_session() as session:
