@@ -6,7 +6,7 @@ db = Database()
 
 shop_info = [
     [['Каталог товаров', 'get_categories'], ['Поиск товаров', 'get_categories']],
-    [['Корзина', 'get_stock_prices'], ['История заказов', 'get_crypto_rates']],
+    [['Корзина', 'view_cart'], ['История заказов', 'get_crypto_rates']],
     [['Акции', 'get_stock_prices'], ['Настройки', 'get_crypto_rates']],
     [['Назад', 'business_examples']]
 ]

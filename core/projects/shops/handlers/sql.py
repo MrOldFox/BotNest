@@ -133,24 +133,73 @@ class Database:
             return result.scalars().all()
 
     async def get_cart_items(self, user_id: int):
-        async with self.session() as session:
-            query = select(Cart).where(Cart.user_id == user_id)
-            result = await session.execute(query)
-            return result.scalars().all()
+        async with async_session() as session:
+            result = await session.execute(
+                select(Cart, Product.name, Product.stock_quantity).join(Product).where(Cart.user_id == user_id))
+            items = result.all()
+            return items
 
-    async def add_item_to_cart(self, user_id: int, product_id: int, quantity: int):
-        async with self.session() as session:
-            new_item = Cart(user_id=user_id, product_id=product_id, quantity=quantity)
-            session.add(new_item)
-            await session.commit()
+
+    async def update_cart_item_quantity(self, cart_id: int, new_quantity: int):
+        async with async_session() as session:  # Предполагается, что async_session уже определен в вашем проекте
+            # Находим запись в корзине по cart_id
+            cart_item = await session.get(Cart, cart_id)
+            if cart_item:
+                # Обновляем количество товара
+                cart_item.quantity = new_quantity
+                # Коммитим изменения
+                await session.commit()
+                return True
+            else:
+                return False
+
 
     async def remove_item_from_cart(self, cart_id: int):
-        async with self.session() as session:
-            query = select(Cart).where(Cart.cart_id == cart_id)
-            result = await session.execute(query)
-            item_to_delete = result.scalars().first()
-            await session.delete(item_to_delete)
+        async with async_session() as session:  # Предполагается, что async_session уже определен в вашем проекте
+            # Находим запись в корзине по cart_id
+            cart_item = await session.get(Cart, cart_id)
+            if cart_item:
+                # Удаляем запись из корзины
+                await session.delete(cart_item)
+                # Коммитим изменения
+                await session.commit()
+                return True
+            else:
+                return False
+
+
+    async def add_item_to_cart(self, user_id: int, product_id: int, requested_quantity: int):
+        async with async_session() as session:
+            # Получаем информацию о продукте, включая количество на складе
+            product_info = await session.execute(select(Product.stock_quantity).where(Product.product_id == product_id))
+            product_stock_quantity = product_info.scalar_one_or_none()
+
+            if product_stock_quantity is None:
+                # Если продукт не найден, можно возвратить сообщение об ошибке
+                return "Продукт не найден."
+
+            if product_stock_quantity < requested_quantity:
+                # Если на складе недостаточно товара
+                return "Недостаточно товара на складе."
+
+            # Проверяем, есть ли уже такой продукт в корзине пользователя
+            existing_item = await session.execute(
+                select(Cart).where(Cart.user_id == user_id, Cart.product_id == product_id))
+            existing_item = existing_item.scalar_one_or_none()
+
+            if existing_item:
+                # Если элемент найден, проверяем, не превысит ли добавление запрошенного количества наличие на складе
+                if existing_item.quantity + requested_quantity > product_stock_quantity:
+                    return "Невозможно добавить указанное количество. Недостаточно товара на складе."
+                # Обновляем количество в корзине без изменения на складе
+                existing_item.quantity += requested_quantity
+            else:
+                # Создаем новый элемент в корзине
+                new_item = Cart(user_id=user_id, product_id=product_id, quantity=requested_quantity)
+                session.add(new_item)
+
             await session.commit()
+            return "Товар добавлен в корзину."
 
     async def clear_cart(self, user_id: int):
         async with self.session() as session:

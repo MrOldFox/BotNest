@@ -21,7 +21,7 @@ image_main = 'https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/shop
 router = Router()
 
 @router.callback_query(F.data == 'shop_main')
-async def fin_trigger(query: CallbackQuery, bot: Bot):
+async def shop_main(query: CallbackQuery, bot: Bot):
     text = (
         "<b>Магазин телефонов MobileNest</b> \n\n"
         "Данный бот показывает пример реализации бота магазина мобильных телефонов с полным рабочим функционалом:"
@@ -146,6 +146,102 @@ def get_product_keyboard(product_id: int, quantity: int, brand_slug: str, telegr
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=buttons)
 
     return keyboard
+
+@router.callback_query(F.data == "view_cart")
+async def view_cart(query: CallbackQuery, bot: Bot):
+    user_id = query.from_user.id  # Получаем ID пользователя
+    cart_items = await db.get_cart_items(user_id)
+    if not cart_items:
+        await query.answer("Ваша корзина пуста.", show_alert=True)
+        return
+
+    text = "Ваша корзина:\n"
+
+    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[])
+
+    for cart_item, product_name, stock_quantity in cart_items:
+        # Для каждого товара создаем список кнопок
+        buttons_row = [
+            types.InlineKeyboardButton(text="<-", callback_data=f"cart_decrease_{cart_item.cart_id}_{cart_item.quantity}"),
+            types.InlineKeyboardButton(text=f"{product_name} ({cart_item.quantity} шт.)", callback_data="noop"),
+            types.InlineKeyboardButton(text="->",
+                                       callback_data=f"cart_increase_{cart_item.cart_id}_{cart_item.quantity}_{stock_quantity}")
+        ]
+        # Добавляем список кнопок как новую строку в inline_keyboard
+        keyboard.inline_keyboard.append(buttons_row)
+    # После добавления всех товаров в клавиатуру добавляем кнопку "Купить"
+    keyboard.inline_keyboard.append([
+        types.InlineKeyboardButton(text="Купить", callback_data="checkout")
+    ])
+
+    # Добавляем кнопку "Назад"
+    keyboard.inline_keyboard.append([
+        types.InlineKeyboardButton(text="Назад", callback_data="shop_main")
+    ])
+
+    sent_message = await query.bot.send_message(query.message.chat.id, text, reply_markup=keyboard)
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+
+
+@router.callback_query(F.data.startswith("cart_increase_"))
+async def increase_cart_item_quantity(query: CallbackQuery, bot: Bot):
+    # Предполагаем, что callback_data имеет вид "cart_increase_cart_id_current_quantity_stock_quantity"
+    data_parts = query.data.split('_')
+    if len(data_parts) != 5:
+        await query.answer("Произошла ошибка. Неверный формат данных.", show_alert=True)
+        return
+
+    _, cart_id, current_quantity, stock_quantity = data_parts[1], int(data_parts[2]), int(data_parts[3]), int(data_parts[4])
+
+    if current_quantity < stock_quantity:
+        # Увеличиваем количество товара в корзине
+        await db.update_cart_item_quantity(cart_id, current_quantity + 1)
+    else:
+        await query.answer("Нельзя добавить больше доступного количества.", show_alert=True)
+
+    await view_cart(query, bot)  # Обновляем содержимое корзины
+
+
+@router.callback_query(F.data.startswith("cart_decrease_"))
+async def decrease_cart_item_quantity(query: CallbackQuery, bot: Bot):
+    data_parts = query.data.split('_')
+    if len(data_parts) >= 4:
+        _, cart_id_str, current_quantity_str = data_parts[1:4]
+        try:
+            cart_id = int(cart_id_str)
+            current_quantity = int(current_quantity_str)
+
+            if current_quantity > 1:
+                await db.update_cart_item_quantity(cart_id, current_quantity - 1)
+            else:
+                await db.remove_item_from_cart(cart_id)
+                # Проверяем, остались ли ещё элементы в корзине после удаления
+                remaining_items = await db.get_cart_items(query.from_user.id)
+                if not remaining_items:
+                    # Если элементов не осталось, возвращаем пользователя в меню
+                    await query.answer("Ваша корзина теперь пуста. Возвращаем вас в меню.")
+                    await shop_main(query, bot)  # Предположим, что у вас есть функция show_main_menu для отображения главного меню
+                    return
+
+            await view_cart(query, bot)  # Обновляем содержимое корзины
+        except ValueError:
+            await query.answer("Произошла ошибка при обработке запроса.", show_alert=True)
+    else:
+        await query.answer("Произошла ошибка при обработке запроса.", show_alert=True)
+
+
+@router.callback_query(F.data.startswith("add_"))
+async def add_to_cart(query: CallbackQuery, bot: Bot):
+    _, product_id, quantity, telegram_id, product_name, color = query.data.split('_')
+    product_id = int(product_id)
+    quantity = int(quantity)
+    telegram_id = int(telegram_id)
+
+    # Вызываем функцию добавления в корзину и получаем результат
+    result_message = await db.add_item_to_cart(telegram_id, product_id, quantity)
+
+    # Отправляем результат пользователю
+    await query.answer(result_message, show_alert=True)
 
 
 @router.callback_query(or_f(F.data.startswith("increase_"), F.data.startswith("decrease_")))
