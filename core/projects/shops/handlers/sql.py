@@ -135,9 +135,19 @@ class Database:
     async def get_cart_items(self, user_id: int):
         async with async_session() as session:
             result = await session.execute(
-                select(Cart, Product.name, Product.stock_quantity).join(Product).where(Cart.user_id == user_id))
+                select(
+                    Cart,
+                    Product.name,
+                    Product.stock_quantity,
+                    Product.price  # Добавляем выборку цены товара
+                ).join(Product).where(Cart.user_id == user_id)
+            )
             items = result.all()
-            return items
+            cart_items = []
+            for item in items:
+                cart_item, product_name, stock_quantity, price = item
+                cart_items.append((cart_item, product_name, stock_quantity, price))  # Добавляем цену в кортеж
+            return cart_items
 
 
     async def update_cart_item_quantity(self, cart_id: int, new_quantity: int):

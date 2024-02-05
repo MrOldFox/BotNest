@@ -150,16 +150,24 @@ def get_product_keyboard(product_id: int, quantity: int, brand_slug: str, telegr
 @router.callback_query(F.data == "view_cart")
 async def view_cart(query: CallbackQuery, bot: Bot):
     user_id = query.from_user.id  # Получаем ID пользователя
-    cart_items = await db.get_cart_items(user_id)
+    cart_items = await db.get_cart_items(user_id)  # Предполагается, что эта функция теперь также возвращает цену каждого товара
     if not cart_items:
         await query.answer("Ваша корзина пуста.", show_alert=True)
         return
 
-    text = "Ваша корзина:\n"
+    text = "В вашей корзине следующие товары:\n\n"
+    total_price = 0  # Для подсчета общей стоимости товаров в корзине
+
+    for cart_item, product_name, stock_quantity, price in cart_items:
+        item_total_price = cart_item.quantity * price  # Стоимость данного товара в корзине
+        text += f"{product_name} - {cart_item.quantity} шт. ({item_total_price} руб.)\n"
+        total_price += item_total_price  # Добавляем стоимость товара к общей стоимости корзины
+
+    text += f"\nОбщая стоимость: {total_price} руб."
 
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=[])
 
-    for cart_item, product_name, stock_quantity in cart_items:
+    for cart_item, product_name, stock_quantity, _ in cart_items:
         # Для каждого товара создаем список кнопок
         buttons_row = [
             types.InlineKeyboardButton(text="<-", callback_data=f"cart_decrease_{cart_item.cart_id}_{cart_item.quantity}"),
@@ -179,7 +187,7 @@ async def view_cart(query: CallbackQuery, bot: Bot):
         types.InlineKeyboardButton(text="Назад", callback_data="shop_main")
     ])
 
-    sent_message = await query.bot.send_message(query.message.chat.id, text, reply_markup=keyboard)
+    await query.bot.send_message(query.message.chat.id, text, reply_markup=keyboard)
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
