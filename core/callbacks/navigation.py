@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 from aiogram.fsm.state import StatesGroup, State
@@ -18,23 +19,43 @@ class FAQ(StatesGroup):
     waiting_for_question = State()
 
 
+@router.message(or_f(Command('order'), F.text.lower == "Заказ", F.text.lower == "заказать"))
 @router.callback_query(F.data == 'order')
-async def order(query: CallbackQuery, bot: Bot):
-    # markup = types.ReplyKeyboardMarkup(keyboard=order_keyboard)
-    sent_message = await query.message.answer(
-        f'Чтобы заказать бота заполните небольшую анкету и '
-        f'мы с вами свяжемся для обсуждения дальнейших шагов',
-        reply_markup=order_keyboard)
+async def order(message: Union[Message, CallbackQuery], bot: Bot):
+    text = (
+        f"<b>📱 Заказ разработки бота</b> \n\n"
+        f"Для начала сотрудничества предлагаем заполнить краткую анкету. "
+        f"Это поможет нам лучше понять ваши потребности и подготовить предложение, максимально соответствующее вашим "
+        f"ожиданиям.\n\n"
+        f"После отправки анкеты наш специалист свяжется с вами для обсуждения деталей проекта "
+        f"и определения следующих шагов.\n\n"
 
-    await query.answer()
-    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+        f"Нажмите <b>'Заполнить анкету'</b>, чтобы перейти к анкете, или <b>'Отмена'</b>, если вы хотите вернуться в предыдущее меню."
+    )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/order.png'
+
+    chat_id = message.message.chat.id if isinstance(message, CallbackQuery) else message.chat.id
+
+    # Отправка изображения с подписью и инлайн-клавиатурой
+    sent_message = await bot.send_photo(
+        chat_id,
+        photo=image_path,  # Или просто строка с URL изображения
+        caption=text,
+        reply_markup=order_keyboard
+    )
+
+    # Вызов функции update_last_message_id
+    await update_last_message_id(bot, sent_message.message_id, chat_id)
 
 
 @router.message(F.web_app_data)
-async def web_order(message: Message, bot: Bot):
+async def web_order(message: Message, bot: Bot, state: FSMContext):
     res = json.loads(message.web_app_data.data)
-    sent_message = await message.answer(f'Спасибо {res["name"]}, мы свяжемся с вами в ближайшее время')
+    sent_message = await message.answer(f'Спасибо {res["name"]}, мы свяжемся с вами в ближайшее время! 🤗\n\n'
+                                        f'<i>Возвращаемся в главное меню...</i>')
     await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
+    await asyncio.sleep(5)
+    await start(message, bot, state)
 
     # Создайте сессию с вашей базой данных
     async with async_session() as session:
@@ -91,55 +112,88 @@ async def notify_admins_and_mods(bot, session, message, include_moderators=True)
 
 @router.callback_query(F.data == 'bot_examples')
 async def bot_examples(query: CallbackQuery, bot: Bot):
-    sent_message = await query.message.answer(
-        f'Вы можете ознакомиться с примером наших ботов'
-        f', чтобы лучше определить, какой типа вам больше подойдет',
-        reply_markup=inline_builder(examples_type)
+
+    text = (
+        f"<b>🤖 Примеры чат-ботов</b>\n\n"
+        f"В BotNest мы разрабатываем чат-боты, ориентированные на различные потребности и цели наших клиентов. "
+        f"Исследуя наши примеры, вы сможете лучше понять, какой тип бота подойдет именно вам.\n\n"
+        f"<b>Выбирайте, исследуйте и вдохновляйтесь</b> – вместе мы сможем создать идеального "
+        f"цифрового помощника для вашего бизнеса или личных нужд!"
     )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/examples.png'
 
-    await query.answer()
-    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
-
-
-
-@router.callback_query(F.data == 'business_examples')
-async def business_examples(query: CallbackQuery, bot: Bot):
-    response_text = (f'Вы можете ознакомиться с примером наших'
-                     f'чтобы лучше определить, какой типа вам больше подойдет')
-
-    await query_message(query, bot, response_text, business_type)
+    await query_message_photo(query, bot, text, image_path, examples_type)
 
 
 @router.callback_query(F.data == 'info_examples')
 async def info_examples(query: CallbackQuery, bot: Bot):
-    response_text = (f'Вы можете ознакомиться с примером наших'
-                     f'чтобы лучше определить, какой типа вам больше подойдет')
+    text = (
+        f"<b>🤖 Примеры чат-ботов</b>\n\n"
+        f"В BotNest мы разрабатываем чат-боты, ориентированные на различные потребности и цели наших клиентов. "
+        f"Исследуя наши примеры, вы сможете лучше понять, какой тип бота подойдет именно вам.\n\n"
+        f"<b>Выбирайте, исследуйте и вдохновляйтесь</b> – вместе мы сможем создать идеального "
+        f"цифрового помощника для вашего бизнеса или личных нужд!"
+    )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/info.png'
 
-    await query_message(query, bot, response_text, info_type)
+    await query_message_photo(query, bot, text, image_path, info_type)
+
 
 
 @router.callback_query(F.data == 'ai_examples')
 async def ai_examples(query: CallbackQuery, bot: Bot):
-    sent_message = await query.message.answer(
-        f'Вы можете ознакомиться с примером ботов на ИИ'
-        f', чтобы лучше определить, какой типа вам больше подойдет',
-        reply_markup=inline_builder(ai_type)
+    text = (
+        f"<b>🤖 Примеры чат-ботов</b>\n\n"
+        f"В BotNest мы разрабатываем чат-боты, ориентированные на различные потребности и цели наших клиентов. "
+        f"Исследуя наши примеры, вы сможете лучше понять, какой тип бота подойдет именно вам.\n\n"
+        f"<b>Выбирайте, исследуйте и вдохновляйтесь</b> – вместе мы сможем создать идеального "
+        f"цифрового помощника для вашего бизнеса или личных нужд!"
     )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/AI.png'
 
-    await query.answer()
-    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+    await query_message_photo(query, bot, text, image_path, ai_type)
 
 
 @router.callback_query(F.data == 'game_examples')
 async def game_examples(query: CallbackQuery, bot: Bot):
-    sent_message = await query.message.answer(
-        f'Вы можете ознакомиться с примером наших ботов'
-        f', чтобы лучше определить, какой типа вам больше подойдет',
-        reply_markup=inline_builder(games_type)
+    text = (
+        f"<b>🤖 Примеры чат-ботов</b>\n\n"
+        f"В BotNest мы разрабатываем чат-боты, ориентированные на различные потребности и цели наших клиентов. "
+        f"Исследуя наши примеры, вы сможете лучше понять, какой тип бота подойдет именно вам.\n\n"
+        f"<b>Выбирайте, исследуйте и вдохновляйтесь</b> – вместе мы сможем создать идеального "
+        f"цифрового помощника для вашего бизнеса или личных нужд!"
     )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/gaming.png'
 
-    await query.answer()
-    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+    await query_message_photo(query, bot, text, image_path, games_type)
+
+
+@router.callback_query(F.data == 'business_examples')
+async def business_examples(query: CallbackQuery, bot: Bot):
+    text = (
+        f"<b>🤖 Примеры чат-ботов</b>\n\n"
+        f"В BotNest мы разрабатываем чат-боты, ориентированные на различные потребности и цели наших клиентов. "
+        f"Исследуя наши примеры, вы сможете лучше понять, какой тип бота подойдет именно вам.\n\n"
+        f"<b>Выбирайте, исследуйте и вдохновляйтесь</b> – вместе мы сможем создать идеального "
+        f"цифрового помощника для вашего бизнеса или личных нужд!"
+    )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/busines.png'
+
+    await query_message_photo(query, bot, text, image_path, business_type)
+
+
+@router.callback_query(F.data == 'service_examples')
+async def service_examples(query: CallbackQuery, bot: Bot):
+    text = (
+        f"<b>🤖 Примеры чат-ботов</b>\n\n"
+        f"В BotNest мы разрабатываем чат-боты, ориентированные на различные потребности и цели наших клиентов. "
+        f"Исследуя наши примеры, вы сможете лучше понять, какой тип бота подойдет именно вам.\n\n"
+        f"<b>Выбирайте, исследуйте и вдохновляйтесь</b> – вместе мы сможем создать идеального "
+        f"цифрового помощника для вашего бизнеса или личных нужд!"
+    )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/service.png'
+
+    await query_message_photo(query, bot, text, image_path, service_type)
 
 
 @router.callback_query(F.data == 'fin_trigger')
@@ -177,26 +231,31 @@ async def contacts(query: CallbackQuery, bot: Bot):
     site = "botnest.ru"
     email = "info@botnest.ru"
 
-    sent_message = await query.message.answer(
-        f'Вы можете связаться несколькими способами:\n\n'
-        f'💻 {site}\n'
-        f'📧 {email}\n',
-
-        reply_markup=inline_builder(contact_menu)
+    text = (
+        f"<b>🤝 Контакты</b> \n\n"
+        f"Мы всегда рады общению и готовы ответить на любые ваши вопросы. Вы можете связаться с нами следующими способами:\n\n"
+        f"<b>На нашем сайте:</b> {site} – здесь вы найдете много полезной информации, а также форму обратной связи.\n"
+        f"<b>По электронной почте:</b> {email} – пишите нам, и мы обязательно ответим.\n\n"
+        f"Независимо от того, есть у вас вопросы по работе существующего бота, или вы хотите обсудить создание нового проекта, мы всегда к вашим услугам."
     )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/contacts.png'
 
-    await query.answer()
-    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+    await query_message_photo(query, bot, text, image_path, contact_menu)
 
 
 @router.callback_query(F.data == 'faq')
 async def enter_faq(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(FAQ.waiting_for_question)
 
-    sent_message = await query.message.answer("Вы в режиме FAQ. Задайте свой вопрос или нажмите 'Отмена' для выхода.",
-                                              reply_markup=inline_builder(cancel_faq))
+    text = (
+        f"<b>💬 Часто задаваемые вопросы (FAQ)</b> \n\n"
+        f"Здесь вы можете задать любые вопросы, касающиеся работы нашей компании, и получить на них быстрый ответ. "
+        f"Этот раздел работает автоматически, без участия оператора, что позволяет вам получить необходимую информацию максимально оперативно.\n\n"
+        f"Напишите свой вопрос и когда получите все необходимые ответы - нажмите 'Отмена', чтобы выйти из режима <b>FAQ</b>."
+    )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/faq.png'
 
-    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+    await query_message_photo(query, bot, text, image_path, cancel_faq)
 
 
 @router.message(FAQ.waiting_for_question, F.text)
@@ -212,19 +271,27 @@ async def process_question(message: Message, bot: Bot, state: FSMContext):
     response_text = detect_intent_texts(message.text)
     if not response_text:
         # Если ответ пустой или None, отправляем сообщение-заглушку
-        response_text = "Извините, у меня пока нет ответа на этот вопрос."
+        response_text = "Извините, у меня пока нет ответа на этот вопрос, но в будущем я его найду 😉"
 
     await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     sent_message = await message.answer(response_text, reply_markup=inline_builder(cancel_faq))
     await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
 
 
-async def query_message_photo(query: CallbackQuery, bot: Bot, text: str, image_path: str, inline_builder_key):
+async def query_message_photo(query: CallbackQuery, bot: Bot, text: str, image_path: str, inline_builder_key,
+                              is_inline=True):
+    if is_inline:
+        # Если клавиатура инлайн, обрабатываем её через builder или передаём напрямую
+        reply_markup = inline_builder(inline_builder_key)
+    else:
+        # Если клавиатура обычная, то предполагаем, что она уже создана и передана напрямую
+        reply_markup = inline_builder_key
+
     sent_message = await query.bot.send_photo(
         query.message.chat.id,
         photo=image_path,
         caption=text,
-        reply_markup=inline_builder(inline_builder_key)
+        reply_markup=reply_markup
     )
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
     await query.answer()

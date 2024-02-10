@@ -35,7 +35,7 @@ def inline_builder(button_layout: List[List[Union[str, List]]]) -> InlineKeyboar
 
 
 main_menu = [
-    [['Заказать', 'order'], ['FAQ', 'shop_main']],
+    [['Заказать', 'order'], ['FAQ', 'faq']],
     [['Примеры ботов', 'bot_examples'], ['Контакты', 'contacts']]
 ]
 
@@ -61,8 +61,13 @@ cancel_order = [
 examples_type = [
     [['ИИ боты', 'ai_examples'], ['Информационные', 'info_examples']],
     [['Игровые', 'game_examples'], ['Для бизнеса', 'business_examples']],
-    [['Инструменты', 'instruments']],
+    [['Инструменты', 'service_examples']],
     [['Назад', 'main_menu']]
+]
+
+service_type = [
+    [['Пример', 'business_info']],
+    [['Назад', 'bot_examples']]
 ]
 
 info_type = [

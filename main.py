@@ -14,7 +14,7 @@ from core.projects.games.lostorder.callbacks import rolldice
 from core.projects.games.lostorder.handlers import gamenavigation
 from core.projects.info.business_info.callbacks import info_navigation
 from core.projects.shops.callbacks import shop_navigation
-
+from core.utils.commands import set_commands
 
 from core.webhook.server import *
 
@@ -25,6 +25,9 @@ async def main():
 
     # Создание роутера
     router = Router()
+
+    # Установка команд бота
+    await set_commands(bot)
 
     logging.basicConfig(level=logging.INFO)
 
