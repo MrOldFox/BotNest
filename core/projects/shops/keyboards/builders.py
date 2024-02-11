@@ -5,15 +5,20 @@ from core.projects.shops.handlers.sql import Database
 db = Database()
 
 shop_info = [
-    [['Каталог товаров', 'get_categories'], ['Поиск товаров', 'get_categories']],
-    [['Корзина', 'view_cart'], ['История заказов', 'get_crypto_rates']],
-    [['Акции', 'get_stock_prices'], ['Настройки', 'get_crypto_rates']],
+    [['Каталог товаров', 'get_categories'], ['Поиск товаров', 'search']],
+    [['Корзина', 'view_cart'], ['История заказов', 'search']],
     [['Назад', 'business_examples']]
 ]
 
 
 shop_back = [
-    [['Назад', 'get_categories']]
+    [['Оплатить заказ', {'pay': 'True'}]],
+    [['Назад', 'view_cart']]
+]
+
+buy = [
+    [['Заказать бот', 'order']],
+    [['Назад', 'shop_main']]
 ]
 
 
@@ -64,7 +69,6 @@ async def get_products_by_brand_menu(brand_slug: str, page: int = 0, items_per_p
     brand_id = await db.get_brand_id_by_slug(brand_slug)
     products = await db.get_products_by_brand(brand_id, page, items_per_page)
 
-    color = False
     product_menu = []
     temp_list = []
 
@@ -72,12 +76,9 @@ async def get_products_by_brand_menu(brand_slug: str, page: int = 0, items_per_p
         # Проверяем, сколько раз встречается продукт с таким именем в базе данных
         product_count = await db.get_product_count_by_name(product.name)
 
-        if product_count > 1:
             # Если имя продукта встречается более одного раза, используем формат с color_
-            callback_data = f"color_{product.name}_{brand_slug}"
-        else:
-            # Если продукт уникален, используем формат с product_
-            callback_data = f"product_{product.product_id}_{brand_slug}_{color}"
+
+        callback_data = f"color_{product.name}_{brand_slug}"
 
         temp_list.append([product.name, callback_data])
 
@@ -99,6 +100,7 @@ async def get_products_by_brand_menu(brand_slug: str, page: int = 0, items_per_p
         product_menu.append(navigation_buttons)
 
     product_menu.append([['Вернуться к брендам', 'get_categories']])
+    product_menu.append([['В главное меню', 'shop_main']])
 
     return product_menu
 
@@ -108,13 +110,12 @@ async def get_products_by_color(product_name: str, brand_slug: str):
     products = await db.get_products_by_color(product_name)
     brand_slug = await db.get_brand_slug_by_product_name(product_name)
 
-    color = True
     product_menu = []
     temp_list = []
 
     for product in products:
         # Формируем пары [название продукта, callback_data для продукта]
-        temp_list.append([product.color, f"product_{product.product_id}_{product.name}_{color}"])
+        temp_list.append([product.color, f"product_{product.product_id}_{product.name}"])
 
         if len(temp_list) == 2:
             product_menu.append(temp_list)
@@ -124,5 +125,6 @@ async def get_products_by_color(product_name: str, brand_slug: str):
         product_menu.append(temp_list)
 
     product_menu.append([['Вернуться к моделям', f'brand_{brand_slug}']])
+    product_menu.append([['В главное меню', 'shop_main']])
 
     return product_menu

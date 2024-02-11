@@ -19,6 +19,8 @@ def inline_builder(button_layout: List[List[Union[str, List]]]) -> InlineKeyboar
                     button = InlineKeyboardButton(text=text, url=data['url'])
                 elif 'web_app' in data:
                     button = InlineKeyboardButton(text=text, web_app=WebAppInfo(url=data['web_app']))
+                elif 'pay' in data:
+                    button = InlineKeyboardButton(text=text, pay=data['pay'])
                 elif 'callback_data' in data:
                     button = InlineKeyboardButton(text=text, callback_data=data['callback_data'])
                 else:

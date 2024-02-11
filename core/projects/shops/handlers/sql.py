@@ -1,7 +1,7 @@
-from sqlalchemy import func
+from sqlalchemy import func, delete
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, selectinload  # Убедитесь, что модели импортированы корректно
+from sqlalchemy.orm import sessionmaker, selectinload, joinedload  # Убедитесь, что модели импортированы корректно
 
 from core.database.models import async_session
 from core.database.models import *
@@ -139,16 +139,36 @@ class Database:
                     Cart,
                     Product.name,
                     Product.stock_quantity,
-                    Product.price  # Добавляем выборку цены товара
+                    Product.price,
+                    Product.color  # Добавляем выборку цвета товара
                 ).join(Product).where(Cart.user_id == user_id)
+                .order_by(Product.name)
             )
             items = result.all()
             cart_items = []
             for item in items:
-                cart_item, product_name, stock_quantity, price = item
-                cart_items.append((cart_item, product_name, stock_quantity, price))  # Добавляем цену в кортеж
+                cart_item, product_name, stock_quantity, price, color = item  # Добавляем color в распаковку кортежа
+                cart_items.append((cart_item, product_name, stock_quantity, price, color))  # Добавляем цвет в кортеж
             return cart_items
 
+    from sqlalchemy.orm import joinedload
+
+    async def get_checkout_items(self, user_id: int):
+        async with async_session() as session:
+            result = await session.execute(
+                select(
+                    Cart,
+                    Product.name,
+                    Product.stock_quantity,
+                    Product.price,
+                    Product.color
+                ).join(Product).where(Cart.user_id == user_id)
+                .order_by(Product.name)
+            )
+            items = result.all()
+            # Исправление здесь: правильно распаковываем все значения
+            return [(cart_item, product_name, stock_quantity, price, color) for
+                    cart_item, product_name, stock_quantity, price, color in items]
 
     async def update_cart_item_quantity(self, cart_id: int, new_quantity: int):
         async with async_session() as session:  # Предполагается, что async_session уже определен в вашем проекте
@@ -211,13 +231,27 @@ class Database:
             await session.commit()
             return "Товар добавлен в корзину."
 
-    async def clear_cart(self, user_id: int):
-        async with self.session() as session:
-            query = select(Cart).where(Cart.user_id == user_id)
-            result = await session.execute(query)
-            items_to_delete = result.scalars().all()
-            for item in items_to_delete:
-                await session.delete(item)
+    async def clear_user_cart(self, user_id: int):
+        async with async_session() as session:
+            # Удаление всех элементов из корзины пользователя
+            await session.execute(delete(Cart).where(Cart.user_id == user_id))
+            await session.commit()
+
+    async def add_purchase_history(self, user_id: int, total_amount: int, cart_items: list):
+        async with async_session() as session:
+            new_purchase = PurchaseHistory(user_id=user_id, total_amount=total_amount)
+            session.add(new_purchase)
+            await session.flush()  # Для получения ID только что созданной записи
+
+            for cart_item, _, _, price, _ in cart_items:
+                new_detail = PurchaseDetail(
+                    purchase_id=new_purchase.purchase_id,
+                    product_id=cart_item.product_id,
+                    quantity=cart_item.quantity,
+                    price_at_purchase=price
+                )
+                session.add(new_detail)
+
             await session.commit()
 
     # async def get_products_by_brand(self, brand_slug: str, page: int = 0, items_per_page: int = 1):

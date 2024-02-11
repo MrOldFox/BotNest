@@ -147,9 +147,9 @@ async def order_cities(message: Message, bot: Bot):
         photo_size=None,
         photo_width=None,
         need_name=False,
-        need_phone_number=False,
+        need_phone_number=True,
         need_shipping_address=True,
-        need_email=False,
+        need_email=True,
         send_email_to_provider=False,
         send_phone_number_to_provider=False,
         is_flexible=True, #цена зависит от места доставки

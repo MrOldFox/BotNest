@@ -3,6 +3,7 @@ import json
 import aiohttp
 import requests
 from aiogram import types
+from aiogram.types import Message, LabeledPrice, PreCheckoutQuery, ShippingOption, ShippingQuery, SuccessfulPayment
 from aiogram.fsm.state import StatesGroup, State
 
 import logging
@@ -15,6 +16,7 @@ from core.projects.info.business_info.keyboards.builders import *
 from core.projects.shops.handlers.sql import Database
 from core.projects.shops.keyboards.builders import *
 from aiogram.filters.callback_data import CallbackData
+from decimal import Decimal, ROUND_HALF_UP
 
 image_main = 'https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/shop.webp'
 
@@ -120,32 +122,112 @@ async def show_products_by_color(query: CallbackQuery, bot: Bot):
     await query.answer()
 
 
-def get_product_keyboard(product_id: int, quantity: int, brand_slug: str, telegram_id: int, product_name: str, color: bool):
-    if color:
-        buttons = [
-            [
-                types.InlineKeyboardButton(text="⬇️", callback_data=f"decrease_{product_id}_{quantity}_{telegram_id}_{product_name}_{color}"),
-                types.InlineKeyboardButton(text=f"🛒 +{quantity}", callback_data=f"add_{product_id}_{quantity}_{telegram_id}_{product_name}_{color}"),
-                types.InlineKeyboardButton(text="⬆️", callback_data=f"increase_{product_id}_{quantity}_{telegram_id}_{product_name}_{color}")
-            ],
 
-                [types.InlineKeyboardButton(text="Назад", callback_data=f"color_{product_name}_{brand_slug}")]
+@router.callback_query(F.data == "checkout")
+async def checkout(query: CallbackQuery, bot: Bot):
+    user_id = query.from_user.id
 
-            ]
-    else:
-        buttons = [
-            [
-                types.InlineKeyboardButton(text="⬇️", callback_data=f"decrease_{product_id}_{quantity}_{telegram_id}_{product_name}_{color}"),
-                types.InlineKeyboardButton(text=f"🛒 +{quantity}",
-                                           callback_data=f"add_{product_id}_{quantity}_{telegram_id}_{product_name}_{color}"),
-                types.InlineKeyboardButton(text="⬆️", callback_data=f"increase_{product_id}_{quantity}_{telegram_id}_{product_name}_{color}")
-            ],
+    # Получаем товары из корзины пользователя
+    cart_items = await db.get_checkout_items(user_id)
+    if not cart_items:
+        await query.answer("Ваша корзина пуста.", show_alert=True)
+        return
 
-            [types.InlineKeyboardButton(text="Назад", callback_data=f"brand_{brand_slug}")]
-            ]
-    keyboard = types.InlineKeyboardMarkup(inline_keyboard=buttons)
+    # Составляем список цен для инвойса
+    prices = []
+    for cart_item, product_name, stock_quantity, price, color in cart_items:
+        label = f"{product_name} ({color}) x {cart_item.quantity}"
+        amount = int(price) * 100 * cart_item.quantity  # Преобразование в целое число и умножение на 100
+        print(amount)
+        prices.append(LabeledPrice(label=label, amount=amount))
 
-    return keyboard
+    total_amount = sum(price.amount for price in prices)  # Общая сумма в копейках
+    print(prices)
+    # Проверяем, не превышает ли общая сумма максимально допустимый порог
+    max_amount = 25000000  # Максимальная сумма в копейках (250 000 рублей)
+    if total_amount > max_amount:
+        await query.answer(f"Сумма покупки не может превышать 250 000 рублей. Ваша сумма составляет {total_amount / 100} рублей.", show_alert=True)
+        return
+
+    # Добавляем фото первого товара в инвойсе для наглядности (если доступно)
+    first_item_photo_url = 'https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/pay.png?_t=1707660307'
+
+    text = (f'\nДля проведения пробной покупки используйте данные тестовой карты:'\
+            f'\n\nНомер карты: 1111 1111 1111 1026,'\
+            f'\nДата выпуска: 12/22,'\
+            f'\nCVC: 000\n')
+    # Отправляем инвойс пользователю
+    send_message = await bot.send_invoice(
+        chat_id=query.message.chat.id,
+        title='Оплата товаров из корзины',
+        description=text,
+        payload='Test payment',
+        provider_token='381764678:TEST:73182',  # Токен платежного провайдера
+        currency='rub',
+        prices=prices,
+        need_name=True,
+        need_phone_number=True,
+        need_shipping_address=True,
+        need_email=True,
+        start_parameter='botnest',
+        send_email_to_provider=False,
+        send_phone_number_to_provider=False,
+        provider_data=None,
+        photo_url=first_item_photo_url,
+        protect_content=False,
+        reply_markup=inline_builder(shop_back),
+        allow_sending_without_reply=True,
+    )
+
+    await update_last_message_id(bot, send_message.message_id, query.from_user.id)
+    await query.answer()
+
+@router.pre_checkout_query()
+async def pre_checkout_query(pre_checkout_query: PreCheckoutQuery, bot: Bot):
+    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
+    print('ok')
+
+@router.message(F.successful_payment)
+async def successful_payment(message: Message, bot: Bot):
+    telegram_id = message.from_user.id
+
+    user_id = message.from_user.id
+
+    # # Получаем информацию о товарах в корзине
+    # cart_items = await db.get_checkout_items(user_id)
+    # if not cart_items:
+    #     await message.answer("Ваша корзина пуста.")
+    #     return
+
+    # # Расчет общей суммы покупки
+    # total_amount = sum(cart_item.quantity * price for cart_item, _, _, price, _ in cart_items)
+    #
+    # # Добавление записи в историю покупок
+    # await db.add_purchase_history(user_id, total_amount, cart_items)
+
+    # Очистка корзины пользователя
+    await db.clear_user_cart(user_id)
+
+    text = (
+        f"<b>💬 Успешно!</b> \n\n"
+        f"Вы успешно получили пробную оплату товара, при этом вы потратили {message.successful_payment.total_amount // 100} виртуальных {message.successful_payment.currency}.\n\n"
+        f"Если хотите получить такой же бот, то можете подать заявку ниже."
+    )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/pay.png?_t=1707660307'
+    sent_message = await bot.send_photo(
+        message.chat.id,
+        photo=image_path,  # Или просто строка с URL изображения
+        caption=text,
+        reply_markup=inline_builder(buy)
+    )
+    await update_last_message_id(bot, sent_message.message_id, telegram_id)
+
+
+@router.callback_query(F.data.startswith("search"))
+async def increase_cart_item_quantity(query: CallbackQuery, bot: Bot):
+    await query.answer(
+        f"Функция в разработке",
+        show_alert=True)
 
 @router.callback_query(F.data == "view_cart")
 async def view_cart(query: CallbackQuery, bot: Bot):
@@ -158,16 +240,16 @@ async def view_cart(query: CallbackQuery, bot: Bot):
     text = "В вашей корзине следующие товары:\n\n"
     total_price = 0  # Для подсчета общей стоимости товаров в корзине
 
-    for cart_item, product_name, stock_quantity, price in cart_items:
+    for cart_item, product_name, stock_quantity, price, color in cart_items:
         item_total_price = cart_item.quantity * price  # Стоимость данного товара в корзине
-        text += f"{product_name} - {cart_item.quantity} шт. ({item_total_price} руб.)\n"
+        text += f"{product_name} ({color}) - {cart_item.quantity} шт. ({item_total_price} руб.)\n"
         total_price += item_total_price  # Добавляем стоимость товара к общей стоимости корзины
 
     text += f"\nОбщая стоимость: {total_price} руб."
 
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=[])
 
-    for cart_item, product_name, stock_quantity, _ in cart_items:
+    for cart_item, product_name, stock_quantity, color, _ in cart_items:
         # Для каждого товара создаем список кнопок
         buttons_row = [
             types.InlineKeyboardButton(text="<-", callback_data=f"cart_decrease_{cart_item.cart_id}_{cart_item.quantity}"),
@@ -187,8 +269,8 @@ async def view_cart(query: CallbackQuery, bot: Bot):
         types.InlineKeyboardButton(text="Назад", callback_data="shop_main")
     ])
 
-    await query.bot.send_message(query.message.chat.id, text, reply_markup=keyboard)
-    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+    send_message = await query.bot.send_message(query.message.chat.id, text, reply_markup=keyboard)
+    await update_last_message_id(bot, send_message.message_id, query.from_user.id)
 
 
 @router.callback_query(F.data.startswith("cart_increase_"))
@@ -240,7 +322,7 @@ async def decrease_cart_item_quantity(query: CallbackQuery, bot: Bot):
 
 @router.callback_query(F.data.startswith("add_"))
 async def add_to_cart(query: CallbackQuery, bot: Bot):
-    _, product_id, quantity, telegram_id, product_name, color = query.data.split('_')
+    _, product_id, quantity, telegram_id, product_name = query.data.split('_')
     product_id = int(product_id)
     quantity = int(quantity)
     telegram_id = int(telegram_id)
@@ -252,15 +334,29 @@ async def add_to_cart(query: CallbackQuery, bot: Bot):
     await query.answer(result_message, show_alert=True)
 
 
+def get_product_keyboard(product_id: int, quantity: int, brand_slug: str, telegram_id: int, product_name: str):
+    buttons = [
+        [
+            types.InlineKeyboardButton(text="⬇️", callback_data=f"decrease_{product_id}_{quantity}_{telegram_id}_{product_name}"),
+            types.InlineKeyboardButton(text=f"🛒 +{quantity}", callback_data=f"add_{product_id}_{quantity}_{telegram_id}_{product_name}"),
+            types.InlineKeyboardButton(text="⬆️", callback_data=f"increase_{product_id}_{quantity}_{telegram_id}_{product_name}")
+        ],
+            [types.InlineKeyboardButton(text="Корзина", callback_data='view_cart')],
+            [types.InlineKeyboardButton(text="Назад", callback_data=f"color_{product_name}_{brand_slug}")]
+
+        ]
+    keyboard = types.InlineKeyboardMarkup(inline_keyboard=buttons)
+
+    return keyboard
+
+
 @router.callback_query(or_f(F.data.startswith("increase_"), F.data.startswith("decrease_")))
 async def change_quantity(query: CallbackQuery, bot: Bot):
-    action, product_id, quantity, telegram_id, product_name, color = query.data.split('_')
+    action, product_id, quantity, telegram_id, product_name = query.data.split('_')
     product_id = int(product_id)
     quantity = int(quantity)
     telegram_id = int(telegram_id)
     product_name = str(product_name)
-    color = bool(color)
-
 
     # Получаем информацию о продукте из базы данных
     product = await db.get_product_by_id(product_id)
@@ -281,11 +377,10 @@ async def change_quantity(query: CallbackQuery, bot: Bot):
             await query.answer("Минимальное количество для добавления - 1 шт.", show_alert=True)
             return
 
-
-    await update_product_details(query.message, product_id, quantity, telegram_id, bot, product_name, color)
+    await update_product_details(query.message, product_id, quantity, telegram_id, bot, product_name)
     await query.answer()
 
-async def update_product_details(message: Message, product_id: int, quantity: int, telegram_id, bot: Bot, product_name: str, color: bool):
+async def update_product_details(message: Message, product_id: int, quantity: int, telegram_id, bot: Bot, product_name: str):
     product = await db.get_product_by_id(product_id)
     if not product:
         await message.answer("Продукт не найден.")
@@ -294,7 +389,7 @@ async def update_product_details(message: Message, product_id: int, quantity: in
     text = generate_product_details_text(product)
 
     sent_message = await message.answer_photo(photo=product.photo_url, caption=text, parse_mode="HTML",
-                                              reply_markup=get_product_keyboard(product_id, quantity, product.brand.name_slug, telegram_id, product_name, color))
+                                              reply_markup=get_product_keyboard(product_id, quantity, product.brand.name_slug, telegram_id, product_name))
     await update_last_message_id(bot, sent_message.message_id, telegram_id)
 
 @router.callback_query(F.data.startswith("product_"))
@@ -304,7 +399,7 @@ async def show_product_details(query: CallbackQuery, bot: Bot):
     # Устанавливаем количество по умолчанию равным 1, если оно не указано
     quantity = int(data_parts[2]) if len(data_parts) > 4 else 1
     brand_slug = str(data_parts[2])
-    color = False
+
 
     if len(data_parts) > 4:  # Предполагаем, что у вас 5 частей в data_parts
         quantity = int(data_parts[2])
@@ -327,10 +422,7 @@ async def show_product_details(query: CallbackQuery, bot: Bot):
     text = generate_product_details_text(product)
 
     # Отправка сообщения с фото и деталями продукта
-    if color:
-        sent_message = await query.message.answer_photo(photo=product.photo_url, caption=text, parse_mode="HTML", reply_markup=get_product_keyboard(product_id, quantity, brand_slug, query.from_user.id, product_name, True))
-    else:
-        sent_message = await query.message.answer_photo(photo=product.photo_url, caption=text, parse_mode="HTML", reply_markup=get_product_keyboard(product_id, quantity, brand_slug, query.from_user.id, product_name, False))
+    sent_message = await query.message.answer_photo(photo=product.photo_url, caption=text, parse_mode="HTML", reply_markup=get_product_keyboard(product_id, quantity, brand_slug, query.from_user.id, product_name))
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
     await query.answer()
 
