@@ -11,6 +11,8 @@ from core.database.models import OrderRequest, UserRole
 from core.handlers.user_commands import *
 from core.keyboards.reply import *
 from core.projects.info.business_info.keyboards.builders import *
+from datetime import datetime
+
 
 router = Router()
 
@@ -23,6 +25,11 @@ async def get_currency_rates():
             # Игнорирование Content-Type и чтение ответа как JSON
             data = await response.json(content_type=None)
             return data['Valute']
+
+def timeit():
+    now = datetime.now()  # Получаем текущие дату и время
+    date_time = now.strftime("%d.%m.%Y %H:%M")  # Форматируем дату и время
+    return date_time
 
 
 def extract_specific_rates(valute_data):
@@ -58,52 +65,68 @@ async def get_stock_price(ticker):
 
 @router.callback_query(F.data == 'business_info')
 async def fin_trigger(query: CallbackQuery, bot: Bot):
+
     text = (
-        "<b>Бот котировок</b> \n\n"
-        "Данный бот получает данные Центра Банка о текущих курсах валют"
-        " и передает пользователям в удобной форме."
+        f"<b>💹 Чат-бот котировок</b> \n\n"
+        f"Данный бот предназначен для мгновенного получения актуальной "
+        f"информации о котировках акций, обменных курсах валют и стоимости криптовалют.\n\n"
+        f"Используя данные боты, вы сможете в любой момент получить "
+        f"свежую информацию о финансовых индикаторах, что позволит вам оперативно реагировать "
+        f"на изменения на рынке и принимать взвешенные инвестиционные решения."
     )
-    image_path = 'https://botnest.ru/wp-content/uploads/2024/01/logot.png'
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/bot_money.webp'
 
     await query_message_photo(query, bot, text, image_path, rate_info)
 
 
 @router.callback_query(F.data == 'get_rates')
 async def get_rates(query: CallbackQuery, bot: Bot):
+    time = timeit()
+
     rates = await get_currency_rates()
     specific_rates = extract_specific_rates(rates)
-    response_text = 'Курсы валют на сегодня:\n\n'
+    response_text = f'<b>Курсы валют на {time}</b>:\n\n'
     response_text += f"Доллар США (USD): {specific_rates['USD']} руб.\n"
     response_text += f"Евро (EUR): {specific_rates['EUR']} руб.\n"
     response_text += f"Китайский юань (CNY): {specific_rates['CNY']} руб.\n"
     response_text += f"Японские йены (JPY): {specific_rates['JPY']} руб.\n"
 
-    await query_message(query, bot, response_text, back)
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/bot_money.webp'
+
+    await query_message_photo(query, bot, response_text, image_path, back)
 
 
 @router.callback_query(F.data == 'get_crypto_rates')
 async def get_crypto_rates(query: CallbackQuery, bot: Bot):
+    time = timeit()
+
     rates = await crypto_rates()
-    response_text = 'Курсы криптовалют:\n\n'
+    response_text = f'<b>Курсы криптовалют на {time}</b>:\n\n'
     response_text += f"Биткоин (BTC): ${rates['bitcoin']['usd']}\n"
     response_text += f"Ethereum (ETH): ${rates['ethereum']['usd']}\n"
     response_text += f"Рипл (XRP): ${rates['ripple']['usd']}\n"
     response_text += f"Litecoin (LTC): ${rates['litecoin']['usd']}\n"
 
-    await query_message(query, bot, response_text, back)
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/bot_money.webp'
+
+    await query_message_photo(query, bot, response_text, image_path, back)
 
 
 @router.callback_query(F.data == 'get_stock_prices')
 async def get_stock_prices(query: CallbackQuery, bot: Bot):
+    time = timeit()
+
     stocks = {
         "Газпром": "GAZP",
         "Сбербанк": "SBER",
         "Ростелеком": "RTKM",
         "Роснефть": "ROSN"
     }
-    response_text = 'Котировки акций на сегодня:\n\n'
+    response_text = f'<b>Котировки акций на {time}</b>:\n\n'
     for name, ticker in stocks.items():
         price = await get_stock_price(ticker)
         response_text += f"{name}: {price} RUB\n"
 
-    await query_message(query, bot, response_text, back)
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/bot_money.webp'
+
+    await query_message_photo(query, bot, response_text, image_path, back)

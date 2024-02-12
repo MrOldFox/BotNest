@@ -25,9 +25,10 @@ router = Router()
 @router.callback_query(F.data == 'shop_main')
 async def shop_main(query: CallbackQuery, bot: Bot):
     text = (
-        "<b>Магазин телефонов MobileNest</b> \n\n"
-        "Данный бот показывает пример реализации бота магазина мобильных телефонов с полным рабочим функционалом:"
-        " карточки товаров, категории, корзина, покупка и доставка товара."
+        "<b>📲 Магазин телефонов MobileNest</b> \n\n"
+        "Наш чат-бот для магазина телефонов позволяет клиентам легко и быстро находить интересующие их модели телефонов,"
+        " получать подробную информацию о продуктах, проверять наличие товара на складе и даже совершать покупки прямо "
+        "через Telegram.\n\nАвтоматизация процесса заказа сокращает время на покупку и повышает удовлетворенность клиентов."
     )
     image_path = image_main
 
@@ -240,22 +241,21 @@ async def view_cart(query: CallbackQuery, bot: Bot):
     text = "В вашей корзине следующие товары:\n\n"
     total_price = 0  # Для подсчета общей стоимости товаров в корзине
 
-    for cart_item, product_name, stock_quantity, price, color in cart_items:
+    # Используем enumerate для получения индекса каждого элемента
+    for index, (cart_item, product_name, stock_quantity, price, color) in enumerate(cart_items, start=1):
         item_total_price = cart_item.quantity * price  # Стоимость данного товара в корзине
-        text += f"{product_name} ({color}) - {cart_item.quantity} шт. ({item_total_price} руб.)\n"
+        text += f"{index}) {product_name} ({color}) - {cart_item.quantity} шт. ({item_total_price} руб.)\n"
         total_price += item_total_price  # Добавляем стоимость товара к общей стоимости корзины
 
     text += f"\nОбщая стоимость: {total_price} руб."
 
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=[])
 
-    for cart_item, product_name, stock_quantity, color, _ in cart_items:
-        # Для каждого товара создаем список кнопок
+    for index, (cart_item, product_name, stock_quantity, color, _) in enumerate(cart_items, start=1):
         buttons_row = [
             types.InlineKeyboardButton(text="<-", callback_data=f"cart_decrease_{cart_item.cart_id}_{cart_item.quantity}"),
-            types.InlineKeyboardButton(text=f"{product_name} ({cart_item.quantity} шт.)", callback_data="noop"),
-            types.InlineKeyboardButton(text="->",
-                                       callback_data=f"cart_increase_{cart_item.cart_id}_{cart_item.quantity}_{stock_quantity}")
+            types.InlineKeyboardButton(text=f"{index}", callback_data="noop"),  # Используем индекс как номер позиции
+            types.InlineKeyboardButton(text="->", callback_data=f"cart_increase_{cart_item.cart_id}_{cart_item.quantity}_{stock_quantity}")
         ]
         # Добавляем список кнопок как новую строку в inline_keyboard
         keyboard.inline_keyboard.append(buttons_row)
@@ -269,7 +269,9 @@ async def view_cart(query: CallbackQuery, bot: Bot):
         types.InlineKeyboardButton(text="Назад", callback_data="shop_main")
     ])
 
-    send_message = await query.bot.send_message(query.message.chat.id, text, reply_markup=keyboard)
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/pay.png?_t=1707660307'
+
+    send_message = await query.bot.send_photo(query.message.chat.id, photo=image_path, caption=text, reply_markup=keyboard)
     await update_last_message_id(bot, send_message.message_id, query.from_user.id)
 
 

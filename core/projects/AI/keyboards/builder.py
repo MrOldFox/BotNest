@@ -36,7 +36,15 @@ order = [
     [['Да', 'order'], ['Нет', 'quit']]
 ]
 
+ai = [
+    [['Начать', 'ai_ass']],
+    [['Назад', 'ai_examples']]
+]
 
 quit_ai = [
-    [['Выйти', 'main_menu']]
+    [['Выйти', 'ai_helper']]
+]
+
+quit_gpt = [
+    [['Выйти', 'ai_gpt']]
 ]

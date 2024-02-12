@@ -83,8 +83,7 @@ business_type = [
 ]
 
 ai_type = [
-    [['ИИ-ассистент', 'ai_ass'], ['Генерация картинок', 'contacts']],
-    [['GigaChat', 'game_examples'], ['ChatGPT', 'faq']],
+    [['ИИ-ассистент', 'ai_helper'], ['ChatGPT', 'ai_gpt']],
     [['Назад', 'bot_examples']]
 ]
 

@@ -1,8 +1,7 @@
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher, types, Router, F
-import aiohttp
-import json
+
 import openai
 
 from aiogram.types import Message
