@@ -13,6 +13,7 @@ from core.projects.AI.callbacks import ai_assistant, ai_navigation
 from core.projects.games.lostorder.callbacks import rolldice
 from core.projects.games.lostorder.handlers import gamenavigation
 from core.projects.info.business_info.callbacks import info_navigation
+from core.projects.service.voice2text.callbacks import v2t_navigation
 from core.projects.shops.callbacks import shop_navigation
 from core.utils.commands import set_commands
 
@@ -47,6 +48,7 @@ async def main():
         ai_navigation.router,
         info_navigation.router,
         shop_navigation.router,
+        v2t_navigation.router
     )
 
     await bot.delete_webhook(drop_pending_updates=True)

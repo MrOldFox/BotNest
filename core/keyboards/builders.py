@@ -68,7 +68,7 @@ examples_type = [
 ]
 
 service_type = [
-    [['Пример', 'business_info']],
+    [['Из текста в голос', 'text2voice']],
     [['Назад', 'bot_examples']]
 ]
 
