@@ -35,6 +35,26 @@ async def shop_main(query: CallbackQuery, bot: Bot):
     await query_message_photo(query, bot, text, image_path, shop_info)
 
 
+@router.callback_query(F.data == 'order_history')
+async def order_history(query: CallbackQuery, bot: Bot):
+    user_id = query.from_user.id  # Получаем ID пользователя из сообщения
+
+    # Проверяем, есть ли у пользователя покупки
+    user_purchases = await db.get_user_purchases(user_id)
+    if not user_purchases:
+        # Если покупок нет, отправляем алерт
+        await query.answer("Вы ещё не совершали покупок.", show_alert=True)
+        return
+
+    # Если покупки есть, продолжаем генерацию клавиатуры и отправку сообщения
+    purchase_keyboard = await generate_purchase_keyboard(user_id)  # Генерируем клавиатуру для покупок пользователя
+
+    text = "Выберите из списка ниже нужную покупку для полной детализации:"
+    image_path = image_main
+
+    await query_message_photo(query, bot, text, image_path, purchase_keyboard)
+
+
 @router.callback_query(F.data == 'get_categories')
 async def get_categories(query: CallbackQuery, bot: Bot):  # Создание экземпляра класса для работы с БД
     category_menu = await get_categories_menu()
@@ -194,19 +214,17 @@ async def successful_payment(message: Message, bot: Bot):
 
     user_id = message.from_user.id
 
-    # # Получаем информацию о товарах в корзине
-    # cart_items = await db.get_checkout_items(user_id)
-    # if not cart_items:
-    #     await message.answer("Ваша корзина пуста.")
-    #     return
+    # Шаг 1: Получаем товары из корзины пользователя
+    cart_items = await db.get_checkout_items(user_id)
+    if cart_items:
+        # Шаг 2: Добавляем запись в PurchaseHistory
+        total_amount = message.successful_payment.total_amount / 100  # Telegram возвращает сумму в копейках
+        purchase_id = await db.add_purchase_history(user_id, total_amount, cart_items)
 
-    # # Расчет общей суммы покупки
-    # total_amount = sum(cart_item.quantity * price for cart_item, _, _, price, _ in cart_items)
-    #
-    # # Добавление записи в историю покупок
-    # await db.add_purchase_history(user_id, total_amount, cart_items)
+        # Шаг 3: Для каждого товара из корзины добавляем запись в PurchaseDetail
+        for cart_item, product_name, stock_quantity, price, color in cart_items:
+            await db.add_purchase_detail(purchase_id, cart_item.product_id, cart_item.quantity, price)
 
-    # Очистка корзины пользователя
     await db.clear_user_cart(user_id)
 
     text = (
@@ -461,41 +479,44 @@ def generate_product_details_text(product):
 
     return ''.join(details)
 
-# @router.callback_query(F.data.startswith("brand_"))
-# async def show_products_by_brand(query: CallbackQuery, bot: Bot):
-#     data_parts = query.data.split('_')
-#     if len(data_parts) == 3:
-#         # Если callback_data содержит три части, значит это формат "brand_{brand_slug}_{page}"
-#         _, brand_slug, str_page = data_parts
-#         page = int(str_page)
-#     elif len(data_parts) == 2:
-#         # Если callback_data содержит две части, значит это формат "brand_{brand_slug}", и используется первая страница
-#         _, brand_slug = data_parts
-#         page = 0
-#     else:
-#         # Неожиданный формат callback_data
-#         await query.answer("Произошла ошибка, попробуйте ещё раз.", show_alert=True)
-#         return
-#
-#     # Далее логика обработки не меняется
-#     products = await db.get_products_by_brand(brand_slug, page)
-#
-#     if not products:
-#         await query.answer("Больше продуктов нет.", show_alert=True)
-#         return
-#
-#     product = products[0]  # Показываем один продукт за раз
-#     text = f"<b>{product.name}</b>\nЦена: {product.price} руб.\nЦвет: {product.color}\nРазмер экрана: {product.screen_size}\nПамять: {product.storage} ГБ\nОЗУ: {product.ram} ГБ\nБатарея: {product.battery_capacity} мАч\nОС: {product.operating_system}\nКамера: {product.camera_resolution}\n\nОписание: {product.description}\nВ наличии: {product.stock_quantity} шт."
-#
-#     # Создание клавиатуры для пагинации
-#     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-#         [InlineKeyboardButton(text="⬅️ Назад",
-#                               callback_data=f"brand_{brand_slug}_{page - 1}" if page > 0 else f"brand_{brand_slug}_{page}"),
-#          InlineKeyboardButton(text="Вперед ➡️", callback_data=f"brand_{brand_slug}_{page + 1}")],
-#         [InlineKeyboardButton(text="Вернуться к брендам", callback_data="get_categories")]
-#     ])
-#
-#
-#     sent_message = await bot.send_photo(chat_id=query.from_user.id, photo=product.photo_url, caption=text, reply_markup=keyboard)
-#     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
-#     await query.answer()
+
+
+@router.callback_query(F.data.startswith("order_"))
+async def show_order_details(query: CallbackQuery, bot: Bot):
+    order_id = int(query.data.split("_")[1])
+    order_details = await db.get_order_details(order_id)  # Предполагается, что этот метод возвращает детали заказа в виде словаря
+
+    if not order_details:
+        await query.message.answer("Детали заказа не найдены.")
+        return
+
+    # Корректно обращаемся к данным через квадратные скобки
+    text = f"Покупка №{order_details['purchase_id']}\nДата покупки: {order_details['purchase_date'].strftime('%d.%m.%Y')}\n\nСписок товаров:\n"
+    total_amount = 0
+
+    for product_detail in order_details['products']:
+        text += f"{product_detail['name']} ({product_detail['quantity']} шт.) - {product_detail['price_at_purchase']} руб\n"
+        total_amount += product_detail['price_at_purchase'] * product_detail['quantity']
+
+    text += f"\nОбщая сумма покупки: {order_details['total_amount']} руб"
+
+    image_path = image_main
+
+    await query_message_photo(query, bot, text, image_path, history_back)
+
+
+@router.callback_query(F.data.startswith("purchases_page_"))
+async def handle_pagination(query: CallbackQuery, bot: Bot):
+    # Извлекаем номер страницы из callback data
+    page = int(query.data.split("_")[-1])
+
+    # Получаем ID пользователя из сообщения
+    user_id = query.from_user.id
+
+    # Генерируем новую клавиатуру для указанной страницы
+    new_keyboard = await generate_purchase_keyboard(user_id, page=page)
+
+    text = "Выберите из списка ниже нужную покупку для полной детализации:"
+    image_path = image_main
+
+    await query_message_photo(query, bot, text, image_path, new_keyboard)

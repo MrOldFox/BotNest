@@ -237,21 +237,79 @@ class Database:
             await session.execute(delete(Cart).where(Cart.user_id == user_id))
             await session.commit()
 
-    async def add_purchase_history(self, user_id: int, total_amount: int, cart_items: list):
+    async def add_purchase_history(self, user_id: int, total_amount: float, cart_items: list):
         async with async_session() as session:
-            new_purchase = PurchaseHistory(user_id=user_id, total_amount=total_amount)
+            new_purchase = PurchaseHistory(
+                user_id=user_id,
+                total_amount=total_amount,
+                purchase_date=datetime.datetime.now(),
+                # или используйте func.now(), если хотите, чтобы время устанавливалось базой данных
+                delivery_status=False,  # Исходное состояние доставки, предположим, что оно False
+                delivery_address="Укажите адрес доставки"  # Это значение следует получить откуда-то ещё
+            )
             session.add(new_purchase)
-            await session.flush()  # Для получения ID только что созданной записи
+            await session.commit()
+            await session.refresh(new_purchase)
+            return new_purchase.purchase_id
 
-            for cart_item, _, _, price, _ in cart_items:
-                new_detail = PurchaseDetail(
-                    purchase_id=new_purchase.purchase_id,
-                    product_id=cart_item.product_id,
-                    quantity=cart_item.quantity,
-                    price_at_purchase=price
-                )
-                session.add(new_detail)
+    async def get_user_purchases(self, user_id: int):
+        async with async_session() as session:
+            result = await session.execute(
+                select(PurchaseHistory)
+                .where(PurchaseHistory.user_id == user_id)
+                .order_by(PurchaseHistory.purchase_date.desc())
+            )
+            return result.scalars().all()
 
+    async def get_order_details(self, purchase_id: int):
+        async with async_session() as session:
+            # Запрос к PurchaseHistory для получения основной информации о покупке
+            purchase_info = await session.execute(
+                select(PurchaseHistory)
+                .where(PurchaseHistory.purchase_id == purchase_id)
+            )
+            purchase_info = purchase_info.scalars().first()
+
+            if not purchase_info:
+                return None  # Если покупка с таким ID не найдена
+
+            # Запрос к PurchaseDetail для получения деталей покупки
+            details_result = await session.execute(
+                select(PurchaseDetail, Product.name)
+                .join(Product, Product.product_id == PurchaseDetail.product_id)
+                .where(PurchaseDetail.purchase_id == purchase_id)
+            )
+            purchase_details = details_result.all()
+
+            # Формирование списка товаров и их деталей
+            products_details = [
+                {
+                    "name": detail[1],  # Имя продукта
+                    "quantity": detail[0].quantity,  # Количество
+                    "price_at_purchase": detail[0].price_at_purchase  # Цена на момент покупки
+                }
+                for detail in purchase_details
+            ]
+
+            return {
+                "purchase_id": purchase_id,
+                "user_id": purchase_info.user_id,
+                "total_amount": purchase_info.total_amount,
+                "purchase_date": purchase_info.purchase_date,
+                "delivery_status": purchase_info.delivery_status,
+                "delivery_address": purchase_info.delivery_address,
+                "products": products_details
+            }
+
+    async def add_purchase_detail(self, purchase_id: int, product_id: int, quantity: int, price_at_purchase: float):
+        async with async_session() as session:
+            new_detail = PurchaseDetail(
+                purchase_id=purchase_id,
+                product_id=product_id,
+                quantity=quantity,
+                price_at_purchase=price_at_purchase
+            )
+            session.add(new_detail)
             await session.commit()
 
     # async def get_products_by_brand(self, brand_slug: str, page: int = 0, items_per_page: int = 1):

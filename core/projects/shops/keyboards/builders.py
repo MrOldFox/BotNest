@@ -1,12 +1,14 @@
 from aiogram.filters.callback_data import CallbackData
+from aiogram.types import InlineKeyboardMarkup
 
+from core.keyboards.builders import inline_builder
 from core.projects.shops.handlers.sql import Database
 
 db = Database()
 
 shop_info = [
     [['Каталог товаров', 'get_categories'], ['Поиск товаров', 'search']],
-    [['Корзина', 'view_cart'], ['История заказов', 'search']],
+    [['Корзина', 'view_cart'], ['История заказов', 'order_history']],
     [['Назад', 'business_examples']]
 ]
 
@@ -14,6 +16,10 @@ shop_info = [
 shop_back = [
     [['Оплатить заказ', {'pay': 'True'}]],
     [['Назад', 'view_cart']]
+]
+
+history_back = [
+    [['Назад', 'order_history']]
 ]
 
 buy = [
@@ -128,3 +134,45 @@ async def get_products_by_color(product_name: str, brand_slug: str):
     product_menu.append([['В главное меню', 'shop_main']])
 
     return product_menu
+
+
+async def generate_purchase_keyboard(user_id: int, page: int = 0, items_per_page: int = 10):
+    # Получаем список покупок пользователя с учетом пагинации
+    user_purchases = await db.get_user_purchases(user_id)
+    total_purchases = len(user_purchases)
+
+    # Определяем начало и конец среза для текущей страницы
+    start = page * items_per_page
+    end = start + items_per_page
+    user_purchases = user_purchases[start:end]
+
+    button_layout = []
+    temp_list = []  # Промежуточный список для формирования рядов кнопок
+
+    for purchase in user_purchases:
+        button_text = f"Покупка №{purchase.purchase_id}"
+        callback_data = f"order_{purchase.purchase_id}"
+        temp_list.append([button_text, callback_data])  # Добавляем кнопку в промежуточный список
+
+        if len(temp_list) == 2:  # Если в ряду уже две кнопки, добавляем его в основной список и очищаем промежуточный
+            button_layout.append(temp_list)
+            temp_list = []
+
+    if temp_list:  # Если осталась одна кнопка в промежуточном списке, добавляем её в основной список
+        button_layout.append(temp_list)
+
+    # Добавляем кнопки управления страницами, если это необходимо
+    navigation_buttons = []
+    if page > 0:
+        navigation_buttons.append(['⬅️ Назад', f'purchases_page_{page - 1}'])
+    if end < total_purchases:
+        navigation_buttons.append(['Вперед ➡️', f'purchases_page_{page + 1}'])
+    if navigation_buttons:
+        button_layout.append(navigation_buttons)
+
+    button_layout.append([['В главное меню', 'shop_main']])
+
+    # Используем функцию inline_builder для создания InlineKeyboardMarkup
+    return button_layout
+
+
