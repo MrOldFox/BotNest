@@ -1,4 +1,3 @@
-import json
 import asyncio
 import logging
 
@@ -10,14 +9,14 @@ from core.database.models import async_main
 from core.handlers import bot_messages, user_commands
 from core.callbacks import pagination, navigation, order
 from core.projects.AI.callbacks import ai_assistant, ai_navigation
+from core.projects.business.business_card.callbacks import card_navigation
 from core.projects.games.lostorder.callbacks import rolldice
 from core.projects.games.lostorder.handlers import gamenavigation
 from core.projects.info.business_info.callbacks import info_navigation
 from core.projects.service.voice2text.callbacks import v2t_navigation
-from core.projects.shops.callbacks import shop_navigation
+from core.projects.business.shops.callbacks import shop_navigation
 from core.utils.commands import set_commands
 
-from core.webhook.server import *
 
 async def main():
     await async_main()
@@ -48,7 +47,8 @@ async def main():
         ai_navigation.router,
         info_navigation.router,
         shop_navigation.router,
-        v2t_navigation.router
+        v2t_navigation.router,
+        card_navigation.router
     )
 
     await bot.delete_webhook(drop_pending_updates=True)

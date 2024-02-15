@@ -1,22 +1,9 @@
-import json
-
-import aiohttp
-import requests
 from aiogram import types
-from aiogram.types import Message, LabeledPrice, PreCheckoutQuery, ShippingOption, ShippingQuery, SuccessfulPayment
-from aiogram.fsm.state import StatesGroup, State
-
-import logging
+from aiogram.types import LabeledPrice, PreCheckoutQuery
 
 from core.callbacks.navigation import *
-from core.database.models import OrderRequest, UserRole
 from core.handlers.user_commands import *
-from core.keyboards.reply import *
-from core.projects.info.business_info.keyboards.builders import *
-from core.projects.shops.handlers.sql import Database
-from core.projects.shops.keyboards.builders import *
-from aiogram.filters.callback_data import CallbackData
-from decimal import Decimal, ROUND_HALF_UP
+from core.projects.business.shops.keyboards.builders import *
 
 image_main = 'https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/shop.webp'
 

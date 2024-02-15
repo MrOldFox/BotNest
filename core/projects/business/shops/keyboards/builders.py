@@ -1,8 +1,4 @@
-from aiogram.filters.callback_data import CallbackData
-from aiogram.types import InlineKeyboardMarkup
-
-from core.keyboards.builders import inline_builder
-from core.projects.shops.handlers.sql import Database
+from core.projects.business.shops.handlers.sql import Database
 
 db = Database()
 
@@ -66,7 +62,7 @@ async def get_categories_menu(page: int = 0, items_per_page: int = 6):
             navigation_buttons.append(['Вперед ➡️', f'page_{page + 1}'])
         category_menu.extend([navigation_buttons])
 
-    category_menu.append([['В меню', 'shop_main']])
+    category_menu.append([['В главное меню', 'shop_main']])
 
     return category_menu
 

@@ -79,6 +79,7 @@ info_type = [
 
 business_type = [
     [['Магазин телефонов', 'shop_main']],
+    [['Юридическая компания', 'card_main']],
     [['Назад', 'bot_examples']]
 ]
 
