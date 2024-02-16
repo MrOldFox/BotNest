@@ -137,6 +137,22 @@ class Discount(Base):
     # Установка связи с товаром
     product = relationship("Product")
 
+class Lawyer(Base):
+    __tablename__ = 'lawyers'
+    lawyer_id = Column(Integer, primary_key=True)  # Уникальный идентификатор юриста
+    name = Column(String(255), nullable=False)  # Имя юриста
+    photo_url = Column(String(255), nullable=True)  # Ссылка на фотографию юриста
+    description = Column(Text, nullable=True)  # Описание юриста
+    specialisation = Column(String(255), nullable=True)  # Специализация юриста
+
+class LegalNews(Base):
+    __tablename__ = 'legal_news'
+    news_id = Column(Integer, primary_key=True)  # Уникальный идентификатор новости
+    title = Column(String(255), nullable=False)  # Заголовок новости
+    content = Column(Text, nullable=False)  # Содержание новости
+    publication_date = Column(TIMESTAMP, nullable=False)  # Дата публикации новости
+    photo_url = Column(String(255), nullable=True)  # Ссылка на фотографию для новости
+
 async def async_main():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

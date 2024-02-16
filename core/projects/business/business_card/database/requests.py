@@ -1,0 +1,30 @@
+from sqlalchemy import func, delete
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker, selectinload, joinedload  # Убедитесь, что модели импортированы корректно
+
+from core.database.models import async_session
+from core.database.models import *
+
+
+class Database:
+    def __init__(self):
+        self.session = async_session()
+
+    async def get_first_lawyer(self):
+        async with async_session() as session:
+            result = await session.execute(select(Lawyer).order_by(Lawyer.lawyer_id).limit(1))
+            first_lawyer = result.scalars().first()
+            return first_lawyer
+
+    async def get_total_lawyers(self):
+        async with async_session() as session:
+            result = await session.execute(select(func.count()).select_from(Lawyer))
+            total_count = result.scalar_one()
+            return total_count
+
+    async def get_lawyer_by_id(self, lawyer_id: int):
+        async with async_session() as session:
+            result = await session.execute(select(Lawyer).where(Lawyer.lawyer_id == lawyer_id))
+            lawyer = result.scalars().first()
+            return lawyer

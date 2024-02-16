@@ -305,6 +305,43 @@ async def query_message_photo(query: CallbackQuery, bot: Bot, text: str, image_p
     await query.answer()
 
 
+async def query_message_photo_normal(query: CallbackQuery, bot: Bot, text: str, image_path: str, inline_builder_key,
+                              is_inline=True):
+    if is_inline:
+        # Если клавиатура инлайн, обрабатываем её через builder или передаём напрямую
+        reply_markup = inline_builder(inline_builder_key)
+    else:
+        # Если клавиатура обычная, то предполагаем, что она уже создана и передана напрямую
+        reply_markup = inline_builder_key
+
+    sent_message = await query.bot.send_photo(
+        query.message.chat.id,
+        photo=image_path,
+        caption=text,
+        reply_markup=reply_markup
+    )
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+    await query.answer()
+
+async def query_message_video(query: CallbackQuery, bot: Bot, text: str, video_path: str, inline_builder_key,
+                              is_inline=True):
+    if is_inline:
+        # Если клавиатура инлайн, обрабатываем её через builder или передаём напрямую
+        reply_markup = inline_builder(inline_builder_key)
+    else:
+        # Если клавиатура обычная, то предполагаем, что она уже создана и передана напрямую
+        reply_markup = inline_builder_key
+
+    sent_message = await query.bot.send_video(
+        query.message.chat.id,
+        video=video_path,
+        caption=text,
+        reply_markup=reply_markup
+    )
+    await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+    await query.answer()
+
+
 async def query_message_animation(query: CallbackQuery, bot: Bot, text: str, image_path: str, inline_builder_key):
     sent_message = await query.bot.send_animation(
         query.message.chat.id,
