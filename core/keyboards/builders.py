@@ -56,6 +56,7 @@ contact_menu = [
     [['Назад', 'main_menu']]
 ]
 
+
 cancel_order = [
     [['Отмена', 'cancel_order']]
 ]
