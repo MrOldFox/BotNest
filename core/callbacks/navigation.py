@@ -335,8 +335,16 @@ async def query_message_animation(query: CallbackQuery, bot: Bot, text: str, ima
     await query.answer()
 
 
-async def query_message(query: CallbackQuery, bot: Bot, text: str, inline_builder_key):
-    sent_message = await query.message.answer(text, reply_markup=inline_builder(inline_builder_key))
+async def query_message(query: CallbackQuery, bot: Bot, text: str, inline_builder_key, is_inline=True):
+
+    if is_inline:
+        # Если клавиатура инлайн, обрабатываем её через builder или передаём напрямую
+        reply_markup = inline_builder(inline_builder_key)
+    else:
+        # Если клавиатура обычная, то предполагаем, что она уже создана и передана напрямую
+        reply_markup = inline_builder_key
+
+    sent_message = await query.message.answer(text, reply_markup=reply_markup)
 
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
     await query.answer()

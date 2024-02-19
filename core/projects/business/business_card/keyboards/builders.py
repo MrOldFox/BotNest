@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 card_main_menu = [
     [['О нас', 'card_info'], ['Услуги', 'card_services']],
-    [['Новости', 'card_news'], ['Контакты', 'card_contacts']],
+    [['Новости', 'start_news'], ['Контакты', 'card_contacts']],
     [['Заказать звонок', {'web_app': 'https://botnest.ru/wp-content/uploads/2024/botnest/lawnest/lawnest.html'}]],
     [['Назад', 'business_examples']]
 ]
@@ -20,7 +20,7 @@ card_service = [
     [['Назад', 'card_main']]
 ]
 
-card_services = [
+card_services_menu = [
     [['Назад', 'card_services']]
 ]
 
@@ -49,10 +49,28 @@ def generate_lawyers_keyboard(current_id: int, total_lawyers: int) -> InlineKeyb
 
     # Кнопка "Вперед"
     if current_id < total_lawyers:
-        buttons.append(InlineKeyboardButton(text="Вперед ➡️", callback_data=f"lawyer_{current_id + 1}"))
+        buttons.append(InlineKeyboardButton(text="Ранее ➡️", callback_data=f"lawyer_{current_id + 1}"))
 
     keyboard.inline_keyboard.append(buttons)
     keyboard.inline_keyboard.append([
-        types.InlineKeyboardButton(text="Назад", callback_data="card_info")
+        types.InlineKeyboardButton(text="Раньше", callback_data="card_info")
     ])
+    return keyboard
+
+
+def generate_news_keyboard(current_id: int, total_news: int) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[])
+    buttons = []
+
+    if current_id > 1:
+        buttons.append(InlineKeyboardButton(text="⬅️ Раньше", callback_data=f"news_{current_id - 1}"))
+
+    if current_id < total_news:
+        buttons.append(InlineKeyboardButton(text="Позже ➡️", callback_data=f"news_{current_id + 1}"))
+
+    keyboard.inline_keyboard.append(buttons)
+    keyboard.inline_keyboard.append([
+        InlineKeyboardButton(text="Назад", callback_data="card_main")
+    ])
+
     return keyboard

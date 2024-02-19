@@ -52,23 +52,23 @@ async def card_services(query: CallbackQuery, bot: Bot):
 @router.callback_query(F.data == 'card_service_m2a')
 async def card_service_m2a(query: CallbackQuery, bot: Bot):
     text = (
-        f"<b>🖋 Услуга корпоративное право и M&A</b>\n\n"
+        f"<b>📄 Услуга корпоративное право и M&A</b>\n\n"
         f"<b>Что мы предлагаем?</b>\n\n"
         f"🔹 Консультации и сопровождение сделок слияния и поглощения\n"
         f"🔹 Стратегическое планирование корпоративного управления\n"
-        f"🔹 Правовое решение корпоративных споров и конфликтов\n\n"
+        f"🔹 Правовое решение корпоативных споров и конфликтов\n\n"
         f"<b>Для кого эта услуга?</b>\n\n"
         f"Идеально для компаний, ищущих расширение через M&A, и желающих укрепить свои корпоративные структуры."
     )
 
     image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/lawnest/photo/service_ma.png'
 
-    await query_message_photo(query, bot, text, image_path, card_services_back)
+    await query_message_photo(query, bot, text, image_path, card_services_menu)
 
 @router.callback_query(F.data == 'card_service_estate')
 async def card_service_estate(query: CallbackQuery, bot: Bot):
     text = (
-        f"<b>🖋 Услуга недвижимость и земельное право</b>\n\n"
+        f"<b>🏢 Услуга недвижимость и земельное право</b>\n\n"
         f"<b>Что мы предлагаем?</b>\n\n"
         f"🔹 Юридическое сопровождение сделок с недвижимостью\n"
         f"🔹 Помощь в регистрации прав собственности и земельных участков\n"
@@ -80,13 +80,13 @@ async def card_service_estate(query: CallbackQuery, bot: Bot):
 
     image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/lawnest/photo/service_estate.png'
 
-    await query_message_photo(query, bot, text, image_path, card_services_back)
+    await query_message_photo(query, bot, text, image_path, card_services_menu)
 
 
 @router.callback_query(F.data == 'card_service_property')
 async def card_service_property(query: CallbackQuery, bot: Bot):
     text = (
-        f"<b>🖋 Услуга интеллектуальная собственность</b>\n\n"
+        f"<b>📑 Услуга интеллектуальная собственность</b>\n\n"
         f"<b>Что мы предлагаем?</b>\n\n"
         f"🔹 Регистрация и защита интеллектуальной собственности (патенты, торговые марки, авторские права)\n"
         f"🔹 Помощь в решении споров по интеллектуальной собственности\n"
@@ -98,7 +98,7 @@ async def card_service_property(query: CallbackQuery, bot: Bot):
 
     image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/lawnest/photo/service_property.png'
 
-    await query_message_photo(query, bot, text, image_path, card_services)
+    await query_message_photo(query, bot, text, image_path, card_services_menu)
 
 
 @router.callback_query(F.data == 'card_contacts')
@@ -148,3 +148,34 @@ async def navigate_lawyers(query: CallbackQuery, bot: Bot):
         await query_message_photo(query, bot, text, lawyer.photo_url, keyboard, False)
     else:
         await query_message(query, bot, text, keyboard)
+
+
+@router.callback_query(F.data == 'start_news')
+async def start_news(query: CallbackQuery, bot: Bot):
+    first_news = await db.get_first_news()
+    total_news = await db.get_total_news()
+
+    keyboard = generate_news_keyboard(first_news.news_id, total_news)
+
+    text = f"<b>Заголовок:</b> {first_news.title}\n\n<b>Описание:</b> {first_news.content}\n\n<b>Дата:</b> {first_news.publication_date.strftime('%Y-%m-%d')}"
+
+    if first_news.photo_url:
+        await query_message_photo(query, bot, text, first_news.photo_url, keyboard, False)
+    else:
+        await query_message(query, bot, text, keyboard, False)
+
+
+@router.callback_query(F.data.startswith("news_"))
+async def navigate_news(query: CallbackQuery, bot: Bot):
+    news_id = int(query.data.split("_")[1])
+    news = await db.get_news_by_id(news_id)
+    total_news = await db.get_total_news()
+
+    keyboard = generate_news_keyboard(news.news_id, total_news)
+
+    text = f"<b>Заголовок:</b> {news.title}\n\n<b>Описание:</b> {news.content}\n\n<b>Дата:</b> {news.publication_date.strftime('%Y-%m-%d')}"
+
+    if news.photo_url:
+        await query_message_photo(query, bot, text, news.photo_url, keyboard, False)
+    else:
+        await query_message(query, bot, text, keyboard, False)
