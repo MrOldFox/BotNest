@@ -74,8 +74,6 @@ def create_chatgpt_prompt(user_input):
         )
     }, {"role": "user", "content": user_input}]
 
-    # Добавление сообщения пользователя
-
     return system_messages
 
 
