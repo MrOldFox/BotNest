@@ -57,7 +57,7 @@ async def web_order(message: Message, bot: Bot, state: FSMContext):
     await asyncio.sleep(5)
     await start(message, bot, state)
 
-    # Создайте сессию с вашей базой данных
+    # Создание сессии
     async with async_session() as session:
         # Выполнение запроса
         result = await session.execute(select(User).where(User.telegram_id == message.from_user.id))
@@ -65,7 +65,7 @@ async def web_order(message: Message, bot: Bot, state: FSMContext):
         # Получение первого результата (если он есть)
         user = result.scalar()
         if user:
-            # Пользователь найден, создаем запись в order_requests с user.id
+            # Пользователь найден
             order_request = OrderRequest(
                 user_id=user.id,
                 phone=res["phone"],
@@ -93,7 +93,6 @@ async def web_order(message: Message, bot: Bot, state: FSMContext):
 
 
 async def notify_admins_and_mods(bot, session, message, include_moderators=True):
-    # Определяем роли, которым нужно отправить сообщение
     roles_to_notify = [UserRole.admin]
     if include_moderators:
         roles_to_notify.append(UserRole.moderator)
@@ -268,17 +267,16 @@ async def enter_faq(query: CallbackQuery, state: FSMContext, bot: Bot):
 
 @router.message(FAQ.waiting_for_question, F.text)
 async def process_question(message: Message, bot: Bot, state: FSMContext):
-    # Сначала проверяем, является ли сообщение командой "Отмена"
     if message.text.lower() == "отмена":
         await state.clear()  # Очищаем состояние (выходим из FAQ)
         await message.answer("Вы вышли из режима FAQ.", reply_markup=ReplyKeyboardRemove())
         await start(message, bot, state)
-        return  # Завершаем обработчик
+        return  # Завершаем
 
-    # Обрабатываем вопрос в Dialogflow, если это не команда "Отмена"
+    # Обрабатываем вопрос в Dialogflow
     response_text = detect_intent_texts(message.text)
     if not response_text:
-        # Если ответ пустой или None, отправляем сообщение-заглушку
+        # Если ответ пустой или None
         response_text = "Извините, у меня пока нет ответа на этот вопрос, но в будущем я его найду 😉"
 
     await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
