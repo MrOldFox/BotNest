@@ -23,17 +23,11 @@ async def main():
     bot = Bot(config.bot_token.get_secret_value(), parse_mode="HTML")
     dp = Dispatcher()
 
-    # Создание роутера
     router = Router()
 
-    # Установка команд бота
     await set_commands(bot)
 
     logging.basicConfig(level=logging.INFO)
-
-    # Добавление middleware к роутеру
-    # dp.message.outer_middleware(AutoDeleteMiddleware())
-    # dp.callback_query.outer_middleware(AutoDeleteMiddleware())
 
     dp.include_routers(
         user_commands.router,
