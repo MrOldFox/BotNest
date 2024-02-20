@@ -1,7 +1,7 @@
 from sqlalchemy import func, delete
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, selectinload, joinedload  # Убедитесь, что модели импортированы корректно
+from sqlalchemy.orm import sessionmaker, selectinload, joinedload
 
 from core.database.models import async_session
 from core.database.models import *
@@ -38,7 +38,6 @@ class Database:
 
     async def get_brand_slug_by_product_name(self, product_name: str):
         async with async_session() as session:
-            # Создаем запрос для выбора slug бренда на основе имени продукта
             query = select(Brand.name_slug).join(Product).where(Product.name == product_name)
             result = await session.execute(query)
             brand_slug = result.scalar()
@@ -47,7 +46,6 @@ class Database:
 
     async def get_products_by_color(self, product_name: str):
         async with async_session() as session:
-            # Получаем все продукты указанного бренда без учета пагинации
             query = select(Product).where(Product.name == product_name).order_by(Product.name)
             all_products = await session.execute(query)
             all_products = all_products.scalars().all()
@@ -58,7 +56,7 @@ class Database:
         async with async_session() as session:
             query = select(Brand.photo_url).where(Brand.name_slug == brand_slug)
             result = await session.execute(query)
-            photo_url = result.scalar_one_or_none()  # Возвращает URL или None, если такого нет
+            photo_url = result.scalar_one_or_none()
             return photo_url
 
 
@@ -79,12 +77,10 @@ class Database:
 
     async def get_products_by_brand(self, brand_id: int, page: int = 0, items_per_page: int = 8):
         async with async_session() as session:
-            # Получаем все продукты указанного бренда без учета пагинации
             query = select(Product).where(Product.brand_id == brand_id).order_by(Product.name)
             all_products = await session.execute(query)
             all_products = all_products.scalars().all()
 
-            # Фильтруем уникальные имена продуктов
             unique_products = []
             seen_names = set()
             for product in all_products:
@@ -92,7 +88,6 @@ class Database:
                     unique_products.append(product)
                     seen_names.add(product.name)
 
-            # Применяем пагинацию к уникальным продуктам
             start_index = page * items_per_page
             end_index = start_index + items_per_page
             paginated_products = unique_products[start_index:end_index]
@@ -101,11 +96,9 @@ class Database:
 
     async def get_total_products_by_brand(self, brand_id: int):
         async with async_session() as session:
-            # Создаем запрос для подсчета количества продуктов определенного бренда
             query = select(func.count()).select_from(Product).where(Product.brand_id == brand_id)
             result = await session.execute(query)
 
-            # Возвращаем количество продуктов бренда
             return result.scalar_one()
 
     async def get_unique_product_names_count_by_brand(self, brand_id: int):
@@ -119,17 +112,14 @@ class Database:
 
     async def get_total_products_by_color(self, product_name: str):
         async with async_session() as session:
-            # Создаем запрос для подсчета количества продуктов определенного бренда
             query = select(func.count()).select_from(Product).where(Product.name == product_name)
             result = await session.execute(query)
 
-            # Возвращаем количество продуктов бренда
             return result.scalar_one()
 
     async def get_all_categories(self):
         async with async_session() as session:
             result = await session.execute(select(Brand))
-            # Возвращаем результат запроса
             return result.scalars().all()
 
     async def get_cart_items(self, user_id: int):
@@ -140,7 +130,7 @@ class Database:
                     Product.name,
                     Product.stock_quantity,
                     Product.price,
-                    Product.color  # Добавляем выборку цвета товара
+                    Product.color
                 ).join(Product).where(Cart.user_id == user_id)
                 .order_by(Product.name)
             )
@@ -166,18 +156,14 @@ class Database:
                 .order_by(Product.name)
             )
             items = result.all()
-            # Исправление здесь: правильно распаковываем все значения
             return [(cart_item, product_name, stock_quantity, price, color) for
                     cart_item, product_name, stock_quantity, price, color in items]
 
     async def update_cart_item_quantity(self, cart_id: int, new_quantity: int):
-        async with async_session() as session:  # Предполагается, что async_session уже определен в вашем проекте
-            # Находим запись в корзине по cart_id
+        async with async_session() as session:
             cart_item = await session.get(Cart, cart_id)
             if cart_item:
-                # Обновляем количество товара
                 cart_item.quantity = new_quantity
-                # Коммитим изменения
                 await session.commit()
                 return True
             else:
@@ -186,12 +172,9 @@ class Database:
 
     async def remove_item_from_cart(self, cart_id: int):
         async with async_session() as session:  # Предполагается, что async_session уже определен в вашем проекте
-            # Находим запись в корзине по cart_id
             cart_item = await session.get(Cart, cart_id)
             if cart_item:
-                # Удаляем запись из корзины
                 await session.delete(cart_item)
-                # Коммитим изменения
                 await session.commit()
                 return True
             else:
@@ -200,31 +183,24 @@ class Database:
 
     async def add_item_to_cart(self, user_id: int, product_id: int, requested_quantity: int):
         async with async_session() as session:
-            # Получаем информацию о продукте, включая количество на складе
             product_info = await session.execute(select(Product.stock_quantity).where(Product.product_id == product_id))
             product_stock_quantity = product_info.scalar_one_or_none()
 
             if product_stock_quantity is None:
-                # Если продукт не найден, можно возвратить сообщение об ошибке
                 return "Продукт не найден."
 
             if product_stock_quantity < requested_quantity:
-                # Если на складе недостаточно товара
                 return "Недостаточно товара на складе."
 
-            # Проверяем, есть ли уже такой продукт в корзине пользователя
             existing_item = await session.execute(
                 select(Cart).where(Cart.user_id == user_id, Cart.product_id == product_id))
             existing_item = existing_item.scalar_one_or_none()
 
             if existing_item:
-                # Если элемент найден, проверяем, не превысит ли добавление запрошенного количества наличие на складе
                 if existing_item.quantity + requested_quantity > product_stock_quantity:
                     return "Невозможно добавить указанное количество. Недостаточно товара на складе."
-                # Обновляем количество в корзине без изменения на складе
                 existing_item.quantity += requested_quantity
             else:
-                # Создаем новый элемент в корзине
                 new_item = Cart(user_id=user_id, product_id=product_id, quantity=requested_quantity)
                 session.add(new_item)
 
@@ -233,7 +209,6 @@ class Database:
 
     async def clear_user_cart(self, user_id: int):
         async with async_session() as session:
-            # Удаление всех элементов из корзины пользователя
             await session.execute(delete(Cart).where(Cart.user_id == user_id))
             await session.commit()
 
@@ -263,7 +238,6 @@ class Database:
 
     async def get_order_details(self, purchase_id: int):
         async with async_session() as session:
-            # Запрос к PurchaseHistory для получения основной информации о покупке
             purchase_info = await session.execute(
                 select(PurchaseHistory)
                 .where(PurchaseHistory.purchase_id == purchase_id)
@@ -273,7 +247,6 @@ class Database:
             if not purchase_info:
                 return None  # Если покупка с таким ID не найдена
 
-            # Запрос к PurchaseDetail для получения деталей покупки
             details_result = await session.execute(
                 select(PurchaseDetail, Product.name)
                 .join(Product, Product.product_id == PurchaseDetail.product_id)
@@ -281,12 +254,11 @@ class Database:
             )
             purchase_details = details_result.all()
 
-            # Формирование списка товаров и их деталей
             products_details = [
                 {
-                    "name": detail[1],  # Имя продукта
-                    "quantity": detail[0].quantity,  # Количество
-                    "price_at_purchase": detail[0].price_at_purchase  # Цена на момент покупки
+                    "name": detail[1],
+                    "quantity": detail[0].quantity,
+                    "price_at_purchase": detail[0].price_at_purchase
                 }
                 for detail in purchase_details
             ]
