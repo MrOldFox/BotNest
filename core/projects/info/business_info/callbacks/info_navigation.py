@@ -22,18 +22,16 @@ async def get_currency_rates():
     url = 'https://www.cbr-xml-daily.ru/daily_json.js'
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
-            # Игнорирование Content-Type и чтение ответа как JSON
             data = await response.json(content_type=None)
             return data['Valute']
 
 def timeit():
-    now = datetime.now()  # Получаем текущие дату и время
-    date_time = now.strftime("%d.%m.%Y %H:%M")  # Форматируем дату и время
+    now = datetime.now()
+    date_time = now.strftime("%d.%m.%Y %H:%M")
     return date_time
 
 
 def extract_specific_rates(valute_data):
-    # Извлечение курсов для определенных валют
     usd_rate = valute_data['USD']['Value']
     eur_rate = valute_data['EUR']['Value']
     cny_rate = valute_data['CNY']['Value']
@@ -58,7 +56,7 @@ async def get_stock_price(ticker):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             data = await response.json(content_type=None)
-            last_price = data['marketdata']['data'][0][12]  # Индекс может варьироваться
+            last_price = data['marketdata']['data'][0][12]
             return last_price
 
 
