@@ -70,7 +70,6 @@ async def process_question(message: Message, bot: Bot, state: FSMContext):
         sent_message = await bot.send_voice(chat_id=message.chat.id, voice=voice_file, caption=message.text,
                                             reply_markup=inline_builder(text_quit))
 
-        # После отправки, если вы хотите удалить файл:
         os.remove(audio_file_path)
     else:
         sent_message = await message.reply("Не удалось преобразовать текст в аудио.", reply_markup=inline_builder(text_quit))
@@ -98,7 +97,7 @@ async def text_to_speech(text):
     }
 
     headers = {
-        'Accept': 'application/json',  # Указываем, что ожидаем JSON
+        'Accept': 'application/json',
     }
 
     async with aiohttp.ClientSession() as session:
