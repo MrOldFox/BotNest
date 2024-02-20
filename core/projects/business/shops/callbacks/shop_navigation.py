@@ -26,15 +26,13 @@ async def shop_main(query: CallbackQuery, bot: Bot):
 async def order_history(query: CallbackQuery, bot: Bot):
     user_id = query.from_user.id  # Получаем ID пользователя из сообщения
 
-    # Проверяем, есть ли у пользователя покупки
     user_purchases = await db.get_user_purchases(user_id)
     if not user_purchases:
         # Если покупок нет, отправляем алерт
         await query.answer("Вы ещё не совершали покупок.", show_alert=True)
         return
 
-    # Если покупки есть, продолжаем генерацию клавиатуры и отправку сообщения
-    purchase_keyboard = await generate_purchase_keyboard(user_id)  # Генерируем клавиатуру для покупок пользователя
+    purchase_keyboard = await generate_purchase_keyboard(user_id)
 
     text = "Выберите из списка ниже нужную покупку для полной детализации:"
     image_path = image_main
@@ -43,7 +41,7 @@ async def order_history(query: CallbackQuery, bot: Bot):
 
 
 @router.callback_query(F.data == 'get_categories')
-async def get_categories(query: CallbackQuery, bot: Bot):  # Создание экземпляра класса для работы с БД
+async def get_categories(query: CallbackQuery, bot: Bot):
     category_menu = await get_categories_menu()
 
     text = (
@@ -57,14 +55,11 @@ async def get_categories(query: CallbackQuery, bot: Bot):  # Создание э
 
 @router.callback_query(F.data.startswith("page_"))
 async def paginate_categories(query: CallbackQuery, bot: Bot):
-    # Извлекаем номер страницы из callback_data
     print(query.data)
     page = int(query.data.split('_')[1])
 
-    # Получаем обновленное меню категорий и кнопки пагинации
     category_menu = await get_categories_menu(page=page)
 
-    # Обновляем сообщение с новым списком категорий и кнопками пагинации
     text = "<b>Выберите категорию товара:</b>"
     image_path = image_main
 
@@ -86,18 +81,14 @@ async def show_products_by_brand(query: CallbackQuery, bot: Bot):
         _, brand_slug = data_parts
         page = 0
     else:
-        # Неожиданный формат callback_data
         await query.answer("Произошла ошибка, попробуйте ещё раз.", show_alert=True)
         return
 
-    # Получаем photo_url для данного brand_slug
     photo_url = await db.get_brand_photo_url_by_slug(brand_slug)
     if not photo_url:
         photo_url = "https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/shop.webp"
 
-
     products_menu = await get_products_by_brand_menu(brand_slug, page)
-
 
     text = f"<b>Продукты бренда:</b>"
 
@@ -117,7 +108,6 @@ async def show_products_by_color(query: CallbackQuery, bot: Bot):
         _, product_name, brand_slug = data_parts
         page = 0
     else:
-        # Неожиданный формат callback_data
         await query.answer("Произошла ошибка, попробуйте ещё раз.", show_alert=True)
         return
 
@@ -141,7 +131,6 @@ async def checkout(query: CallbackQuery, bot: Bot):
         await query.answer("Ваша корзина пуста.", show_alert=True)
         return
 
-    # Составляем список цен для инвойса
     prices = []
     for cart_item, product_name, stock_quantity, price, color in cart_items:
         label = f"{product_name} ({color}) x {cart_item.quantity}"
@@ -151,7 +140,6 @@ async def checkout(query: CallbackQuery, bot: Bot):
 
     total_amount = sum(price.amount for price in prices)  # Общая сумма в копейках
     print(prices)
-    # Проверяем, не превышает ли общая сумма максимально допустимый порог
     max_amount = 25000000  # Максимальная сумма в копейках (250 000 рублей)
     if total_amount > max_amount:
         await query.answer(f"Сумма покупки не может превышать 250 000 рублей. Ваша сумма составляет {total_amount / 100} рублей.", show_alert=True)
@@ -170,7 +158,7 @@ async def checkout(query: CallbackQuery, bot: Bot):
         title='Оплата товаров из корзины',
         description=text,
         payload='Test payment',
-        provider_token='381764678:TEST:73182',  # Токен платежного провайдера
+        provider_token='381764678:TEST:73182',
         currency='rub',
         prices=prices,
         need_name=True,
@@ -372,7 +360,7 @@ async def change_quantity(query: CallbackQuery, bot: Bot):
         return
 
     if action == "increase":
-        if quantity < product.stock_quantity:  # Увеличиваем только если меньше доступного количества
+        if quantity < product.stock_quantity:
             quantity += 1
         else:
             await query.answer("Нельзя добавить больше доступного количества.", show_alert=True)
@@ -403,7 +391,7 @@ async def update_product_details(message: Message, product_id: int, quantity: in
 async def show_product_details(query: CallbackQuery, bot: Bot):
     data_parts = query.data.split('_')
     product_id = int(data_parts[1])
-    # Устанавливаем количество по умолчанию равным 1, если оно не указано
+
     quantity = int(data_parts[2]) if len(data_parts) > 4 else 1
     brand_slug = str(data_parts[2])
 
@@ -416,7 +404,6 @@ async def show_product_details(query: CallbackQuery, bot: Bot):
         brand_slug = data_parts[2]
         color = data_parts[3].lower() == "true"
     else:
-        # Если меньше, то используем значения по умолчанию или другую логику
         pass
 
     product = await db.get_product_by_id(product_id)
@@ -428,7 +415,6 @@ async def show_product_details(query: CallbackQuery, bot: Bot):
 
     text = generate_product_details_text(product)
 
-    # Отправка сообщения с фото и деталями продукта
     sent_message = await query.message.answer_photo(photo=product.photo_url, caption=text, parse_mode="HTML", reply_markup=get_product_keyboard(product_id, quantity, brand_slug, query.from_user.id, product_name))
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
     await query.answer()
@@ -471,7 +457,7 @@ def generate_product_details_text(product):
 @router.callback_query(F.data.startswith("order_"))
 async def show_order_details(query: CallbackQuery, bot: Bot):
     order_id = int(query.data.split("_")[1])
-    order_details = await db.get_order_details(order_id)  # Предполагается, что этот метод возвращает детали заказа в виде словаря
+    order_details = await db.get_order_details(order_id)
 
     if not order_details:
         await query.message.answer("Детали заказа не найдены.")
@@ -494,13 +480,10 @@ async def show_order_details(query: CallbackQuery, bot: Bot):
 
 @router.callback_query(F.data.startswith("purchases_page_"))
 async def handle_pagination(query: CallbackQuery, bot: Bot):
-    # Извлекаем номер страницы из callback data
     page = int(query.data.split("_")[-1])
 
-    # Получаем ID пользователя из сообщения
     user_id = query.from_user.id
 
-    # Генерируем новую клавиатуру для указанной страницы
     new_keyboard = await generate_purchase_keyboard(user_id, page=page)
 
     text = "Выберите из списка ниже нужную покупку для полной детализации:"
