@@ -25,35 +25,28 @@ buy = [
 
 
 async def get_categories_menu(page: int = 0, items_per_page: int = 6):
-    categories = await db.get_all_categories()  # Получение списка категорий
+    categories = await db.get_all_categories()
 
-    # Сортировка списка категорий от А до Я по имени
     sorted_categories = sorted(categories, key=lambda category: category.name)
 
-    # Вычисление начального и конечного индекса для текущей страницы
     start = page * items_per_page
     end = start + items_per_page
 
-    # Срез отсортированного списка категорий для текущей страницы
     page_categories = sorted_categories[start:end]
 
     category_menu = []
     temp_list = []
 
     for category in page_categories:
-        # Добавляем пары категорий во временный список
         temp_list.append([category.name, f"brand_{category.name_slug}"])
 
-        # Когда во временном списке накапливается два элемента, добавляем его в основной список и очищаем временный
         if len(temp_list) == 2:
             category_menu.append(temp_list)
             temp_list = []
 
-    # Если после цикла во временном списке остались элементы, добавляем их в основной список
     if temp_list:
         category_menu.append(temp_list)
 
-    # Добавляем кнопки управления страницами, если это необходимо
     if len(sorted_categories) > items_per_page:
         navigation_buttons = []
         if page > 0:
@@ -75,10 +68,7 @@ async def get_products_by_brand_menu(brand_slug: str, page: int = 0, items_per_p
     temp_list = []
 
     for product in products:
-        # Проверяем, сколько раз встречается продукт с таким именем в базе данных
         product_count = await db.get_product_count_by_name(product.name)
-
-            # Если имя продукта встречается более одного раза, используем формат с color_
 
         callback_data = f"color_{product.name}_{brand_slug}"
 
@@ -91,7 +81,6 @@ async def get_products_by_brand_menu(brand_slug: str, page: int = 0, items_per_p
     if temp_list:
         product_menu.append(temp_list)
 
-    # Добавляем кнопки управления страницами, если это необходимо
     total_products = await db.get_total_products_by_brand(brand_id)
     navigation_buttons = []
     if page > 0:
@@ -116,7 +105,6 @@ async def get_products_by_color(product_name: str, brand_slug: str):
     temp_list = []
 
     for product in products:
-        # Формируем пары [название продукта, callback_data для продукта]
         temp_list.append([product.color, f"product_{product.product_id}_{product.name}"])
 
         if len(temp_list) == 2:
@@ -143,21 +131,20 @@ async def generate_purchase_keyboard(user_id: int, page: int = 0, items_per_page
     user_purchases = user_purchases[start:end]
 
     button_layout = []
-    temp_list = []  # Промежуточный список для формирования рядов кнопок
+    temp_list = [] 
 
     for purchase in user_purchases:
         button_text = f"Покупка №{purchase.purchase_id}"
         callback_data = f"order_{purchase.purchase_id}"
-        temp_list.append([button_text, callback_data])  # Добавляем кнопку в промежуточный список
+        temp_list.append([button_text, callback_data]) 
 
-        if len(temp_list) == 2:  # Если в ряду уже две кнопки, добавляем его в основной список и очищаем промежуточный
+        if len(temp_list) == 2: 
             button_layout.append(temp_list)
             temp_list = []
 
-    if temp_list:  # Если осталась одна кнопка в промежуточном списке, добавляем её в основной список
+    if temp_list: 
         button_layout.append(temp_list)
 
-    # Добавляем кнопки управления страницами, если это необходимо
     navigation_buttons = []
     if page > 0:
         navigation_buttons.append(['⬅️ Назад', f'purchases_page_{page - 1}'])
@@ -168,7 +155,6 @@ async def generate_purchase_keyboard(user_id: int, page: int = 0, items_per_page
 
     button_layout.append([['В главное меню', 'shop_main']])
 
-    # Используем функцию inline_builder для создания InlineKeyboardMarkup
     return button_layout
 
 
