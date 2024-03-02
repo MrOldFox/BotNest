@@ -16,13 +16,13 @@ from sqlalchemy.orm import relationship
 
 from config_reader import config
 
-# Строка подключения к базе данных PostgreSQL
+# Строка подключения к бд
 database_url = config.database_url.get_secret_value()
 
 # Создание асинхронного движка
 engine = create_async_engine(database_url, echo=True)
 
-# Создание асинхронной фабрики сессий
+# Создание асинхронной фабрики
 async_session = async_sessionmaker(
     engine, expire_on_commit=False, class_=AsyncSession
 )
@@ -54,9 +54,9 @@ class OrderRequest(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User")
-    phone = Column(String(20))  # Ограничение до 50 символов
-    email = Column(String(50))  # Ограничение до 50 символов
-    description = Column(String(1000))  # Ограничение до 1000 символов
+    phone = Column(String(20))
+    email = Column(String(50))
+    description = Column(String(1000))
     contact_via_telegram = Column(Boolean)
 
 
@@ -82,7 +82,7 @@ class Product(Base):
     price = Column(DECIMAL(10, 2), nullable=False)  # Цена товара
     photo_url = Column(String(255))  # URL фотографии товара
     color = Column(String(50))  # Цвет корпуса
-    screen_size = Column(String(255))  # Размер экрана в дюймах
+    screen_size = Column(String(255))  # Размер экрана
     storage = Column(String(255))  # Встроенная память в ГБ
     ram = Column(String(255))  # Оперативная память в ГБ
     battery_capacity = Column(Integer)  # Ёмкость батареи в мАч
@@ -98,7 +98,7 @@ class Product(Base):
 class Cart(Base):
     __tablename__ = 'cart'
     cart_id = Column(Integer, primary_key=True)  # Уникальный идентификатор записи в корзине
-    user_id = Column(Integer, nullable=False)  # Идентификатор пользователя (предполагается внешняя связь)
+    user_id = Column(Integer, nullable=False)  # Идентификатор пользователя
     product_id = Column(Integer, ForeignKey('products.product_id'), nullable=False)  # Ссылка на товар
     quantity = Column(Integer, nullable=False)  # Количество товара в корзине
     # Установка связи с товаром
@@ -107,9 +107,9 @@ class Cart(Base):
 
 class PurchaseHistory(Base):
     __tablename__ = 'purchase_history'
-    purchase_id = Column(Integer, primary_key=True)  # Уникальный идентификатор покупки
+    purchase_id = Column(Integer, primary_key=True)  # идентификатор покупки
     user_id = Column(Integer, nullable=False)  # Идентификатор пользователя
-    total_amount = Column(DECIMAL(10, 2), nullable=False)  # Общая сумма покупки
+    total_amount = Column(DECIMAL(10, 2), nullable=False)  # сумма покупки
     purchase_date = Column(TIMESTAMP, nullable=False, default='CURRENT_TIMESTAMP')  # Дата и время покупки
     delivery_status = Column(Boolean, nullable=False)  # Статус доставки
     delivery_address = Column(Text)  # Адрес доставки
@@ -117,7 +117,7 @@ class PurchaseHistory(Base):
 
 class PurchaseDetail(Base):
     __tablename__ = 'purchase_details'
-    purchase_detail_id = Column(Integer, primary_key=True)  # Уникальный идентификатор детали покупки
+    purchase_detail_id = Column(Integer, primary_key=True)  # идентификатор детали покупки
     purchase_id = Column(Integer, ForeignKey('purchase_history.purchase_id'), nullable=False)  # Ссылка на покупку
     product_id = Column(Integer, ForeignKey('products.product_id'), nullable=False)  # Ссылка на товар
     quantity = Column(Integer, nullable=False)  # Количество купленного товара

@@ -84,8 +84,8 @@ async def process_ai_question(message: Message, bot: Bot, state: FSMContext):
         user_input = message.text
         prompt = create_chatgpt_prompt(user_input)
 
-        # Установка ограничений для размера ответа и температуры
-        temperature = 0.4  # Пример для умеренной творческой свободы
+
+        temperature = 0.4
 
         chat = openai.chat.completions.create(
             model='gpt-3.5-turbo',
@@ -96,7 +96,7 @@ async def process_ai_question(message: Message, bot: Bot, state: FSMContext):
         answer = chat.choices[0].message.content
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 
-        # Проверка ответа и вызов callback-функции
+        # Проверка ответа и вызов
         if "Для записи на услуги" in answer:
             sent_message = await message.answer("Хотите записаться на услугу?", reply_markup=inline_builder(order))
             await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
@@ -113,7 +113,7 @@ async def process_ai_question(message: Message, bot: Bot, state: FSMContext):
         user_input = message.text
 
         # Установка ограничений для размера ответа и температуры
-        temperature = 0.4  # Пример для умеренной творческой свободы
+        temperature = 0.4 
 
         chat = openai.chat.completions.create(
             model='gpt-3.5-turbo',

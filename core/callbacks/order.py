@@ -36,7 +36,6 @@ async def start_survey(query: CallbackQuery, state: FSMContext):
 
 @router.message(Order.awaiting_phone, F.text)
 async def process_phone(message: Message, state: FSMContext):
-    print('1')
     phone = message.contact.phone_number if message.contact else message.text
 
     # Переход к следующему вопросу анкеты
@@ -52,7 +51,7 @@ async def process_description(message: Message, state: FSMContext):
     description = message.text
     await state.update_data(description=description)
 
-    # Переход к следующему вопросу или завершение анкеты
+    # Переход к следующему вопросу
     await message.answer("Какие у вас требования к срокам реализации бота?",
                          reply_markup=inline_builder(cancel_order))
     await state.set_state(Order.awaiting_deadline)
@@ -81,7 +80,7 @@ async def process_deadline(message: Message, state: FSMContext):
         bot_request = OrderRequest(user_id=user.id, phone=new_phone, description=description, deadline=deadline)
         session.add(bot_request)
 
-        # Фиксация изменений в базе данных
+        # Фиксация изменений в бд
         await session.commit()
         await message.answer("Спасибо за заполнение анкеты!")
 
