@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-RU-Compatible">
+    <title>Оставить заявку</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Montserrat", sans-serif;
+            font-weight: 200;
+            color: var(--tg-theme-text-color);
+            background: var(--tg-theme-bg-color);
+        }
+
+        #main {
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 50px;
+            margin-bottom: 10px;
+        }
+
+        img {
+            width: 70px;
+            margin: 30px auto;
+        }
+
+        p {
+            width: 350px;
+            margin: 0 auto;
+        }
+
+        button {
+            border: 0;
+            border-radius: 5px;
+            margin-top: 50px;
+            height: 60px;
+            width: 200px;
+            font-size: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 500ms ease;
+            color: var(--tg-theme-button-color);
+            background: var(--tg-theme-button-text-color);
+        }
+
+        button:hover {
+            background: var(--tg-theme-secondary-bg-color);
+        }
+
+        #form {
+            display: none;
+            text-align: center;
+        }
+
+        input {
+            width: 90%;
+            outline: none;
+            margin: 10px 5%;
+            padding: 15px 10px;
+            font-size: 14px;
+            border: 2px solid silver;
+            border-radius: 5px;
+        }
+
+        input[type="checkbox"] {
+            width: auto; /* Сброс ширины для чекбокса */
+            margin: 0;
+            padding: 0;
+            border: none; /* Убрать рамку у чекбокса */
+        }
+
+        input:focus {
+            border-color: #db5d5d;
+        }
+
+        textarea {
+            width: 90%;
+            outline: none;
+            margin: 10px 5%;
+            padding: 15px 10px;
+            font-size: 14px;
+            border: 2px solid silver;
+            border-radius: 5px;
+        }
+
+        textarea:focus {
+            border-color: #db5d5d;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 5%;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 5%;
+        }
+
+        .checkbox-container label {
+            margin-left: 10px; /* Отступ слева от чекбокса */
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+        <h1>Заказать обратный звонок</h1>
+        <img src="https://botnest.ru/wp-content/uploads/2024/botnest/lawnest/photo/lawnest_logo.png">
+        <p>Оставить свой контактный телефон и мы свяжемся с вами в ближайшее время</p>
+        <button id="order">Заполнить</button>
+    </div>
+    <form id="form">
+        <input type="text" placeholder="Имя" id="user_name" maxlength="50">
+        <input type="text" placeholder="Телефон" id="user_phone" maxlength="20">
+        <div class="checkbox-container">
+            <input type="checkbox" id="contact_via_telegram" name="contact_via_telegram">
+            <label for="contact_via_telegram">Свяжитесь со мной через Telegram</label>
+        </div>
+        <div id="error" style="color: #db5d5d"></div>
+        <button id="send">Отправить</button>
+    </form>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+    let tg = window.Telegram.WebApp;
+    let order = document.getElementById('order')
+    let send = document.getElementById('send')
+    tg.expand();
+
+    order.addEventListener('click', () => {
+        document.getElementById('main').style.display = 'none';
+        document.getElementById('form').style.display = 'block';
+        document.getElementById('user_name').value = tg.initDataUnsafe.user.first_name +" " + tg.user.initDataUnsafe.last_name;
+    });
+
+    send.addEventListener('click', (e) => {
+        e.preventDefault(); // предотвратить отправку формы по умолчанию
+
+        let name = document.getElementById("user_name").value;
+        let phone = document.getElementById("user_phone").value;
+        let contactViaTelegram = document.getElementById("contact_via_telegram").checked;
+
+        // Проверка, что имя и описание не пустые
+        if (!name.trim()) {
+            document.getElementById('error').innerText = "Пожалуйста, укажите ваше Имя"
+            return;
+        }
+
+        // Проверка, что заполнено хотя бы одно из полей: Email или Телефон
+        if (!phone.trim()) {
+            document.getElementById('error').innerText = "Пожалуйста, укажите ваш Телефон"
+            return;
+        }
+
+
+        let data = {
+            name: name,
+            phone: phone,
+            contactViaTelegram: contactViaTelegram
+        }
+        tg.sendData(JSON.stringify(data))
+
+        // Здесь код для отправки данных формы
+        tg.close();
+    });
+</script>
+</body>
+</html>
