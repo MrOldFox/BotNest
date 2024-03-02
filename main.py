@@ -8,7 +8,7 @@ from core.database.models import async_main
 
 from core.handlers import bot_messages, user_commands
 from core.callbacks import pagination, navigation, order
-from core.projects.AI.callbacks import ai_assistant, ai_navigation
+from core.projects.ai.callbacks import ai_assistant, ai_navigation
 from core.projects.business.business_card.callbacks import card_navigation
 from core.projects.games.lostorder.callbacks import rolldice
 from core.projects.games.lostorder.handlers import gamenavigation
@@ -23,8 +23,7 @@ async def main():
     bot = Bot(config.bot_token.get_secret_value(), parse_mode="HTML")
     dp = Dispatcher()
 
-    router = Router()
-
+    # Установка команд бота
     await set_commands(bot)
 
     logging.basicConfig(level=logging.INFO)

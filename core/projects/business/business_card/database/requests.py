@@ -1,9 +1,5 @@
-from sqlalchemy import func, delete
 from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, selectinload, joinedload  # Убедитесь, что модели импортированы корректно
 
-from core.database.models import async_session
 from core.database.models import *
 
 

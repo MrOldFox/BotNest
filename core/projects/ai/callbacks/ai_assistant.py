@@ -1,23 +1,16 @@
-import asyncio
 import logging
-from aiogram import Bot, Dispatcher, types, Router, F
+from aiogram import Router
 
 import openai
 
-from aiogram.types import Message
-from aiogram.enums import ParseMode
-
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-
-from core.projects.AI.keyboards.builder import inline_builder, order
+from config_reader import config
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
 
 router = Router()
 
-openai.api_key = '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'
+openai.api_key = config.openai_key.get_secret_value()
 
 messages = []
 

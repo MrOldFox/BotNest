@@ -48,6 +48,8 @@ class User(Base):
     role = Column(Enum(UserRole), default=UserRole.user)
     max_tokens_gpt = Column(Integer, default=5)
     max_tokens_gpt_assistant = Column(Integer, default=5)
+    max_tokens_voice_gen = Column(Integer, default=5)
+
 
 class OrderRequest(Base):
     __tablename__ = 'order_requests'
