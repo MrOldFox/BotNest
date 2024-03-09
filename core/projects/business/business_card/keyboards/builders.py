@@ -49,11 +49,11 @@ def generate_lawyers_keyboard(current_id: int, total_lawyers: int) -> InlineKeyb
 
     # Кнопка "Вперед"
     if current_id < total_lawyers:
-        buttons.append(InlineKeyboardButton(text="Ранее ➡️", callback_data=f"lawyer_{current_id + 1}"))
+        buttons.append(InlineKeyboardButton(text="Вперед ➡️", callback_data=f"lawyer_{current_id + 1}"))
 
     keyboard.inline_keyboard.append(buttons)
     keyboard.inline_keyboard.append([
-        types.InlineKeyboardButton(text="Раньше", callback_data="card_info")
+        types.InlineKeyboardButton(text="Назад", callback_data="card_info")
     ])
     return keyboard
 
