@@ -71,7 +71,7 @@ async def ai_ass(query: CallbackQuery, state: FSMContext, bot: Bot):
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
 
 
-@router.callback_query(F.data == 'ai_gpt')
+@router.callback_query(F.data == 'ai_gpt_start')
 async def ai_gpt(query: CallbackQuery, state: FSMContext, bot: Bot):
     await state.set_state(AI_ASS.waiting_for_gpt_ass)
 

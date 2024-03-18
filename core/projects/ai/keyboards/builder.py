@@ -42,7 +42,7 @@ ai = [
 ]
 
 gpt_menu = [
-    [['Начать', 'ai_gpt']],
+    [['Начать', 'ai_gpt_start']],
     [['Назад', 'ai_examples']]
 ]
 
