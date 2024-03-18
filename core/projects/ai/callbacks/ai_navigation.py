@@ -57,7 +57,7 @@ async def ai_gpt(query: CallbackQuery, bot: Bot, state: FSMContext):
     )
     image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/examples.png'
 
-    await query_message_photo(query, bot, text, image_path, ai)
+    await query_message_photo(query, bot, text, image_path, gpt_menu)
 
 
 @router.callback_query(F.data == 'ai_ass')

@@ -41,6 +41,11 @@ ai = [
     [['Назад', 'ai_examples']]
 ]
 
+gpt_menu = [
+    [['Начать', 'ai_gpt']],
+    [['Назад', 'ai_examples']]
+]
+
 quit_ai = [
     [['Выйти', 'ai_helper']]
 ]

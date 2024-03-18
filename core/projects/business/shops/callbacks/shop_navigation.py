@@ -116,7 +116,7 @@ async def show_products_by_color(query: CallbackQuery, bot: Bot):
 
     text = f"<b>Выберите цвет продукта:</b>"
 
-    await query_message_photo(query, bot, text, "https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/apple-logo.jpg", products_menu)
+    await query_message_photo(query, bot, text, "https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/shop.webp", products_menu)
     await query.answer()
 
 
