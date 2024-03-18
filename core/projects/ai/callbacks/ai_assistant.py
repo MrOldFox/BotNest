@@ -70,28 +70,15 @@ def create_chatgpt_prompt(user_input):
     return system_messages
 
 
-# @router.message(.waiting_for_question, F.text)
-# async def start_chat_gpt(message: types.Message):
-#     try:
-#         user_input = message.text
-#         prompt = create_chatgpt_prompt(user_input)
-#
-#         # Установка ограничений для размера ответа и температуры
-#         temperature = 0.4  # Пример для умеренной творческой свободы
-#
-#         chat = openai.chat.completions.create(
-#             model='gpt-3.5-turbo',
-#             messages=prompt,
-#             temperature=temperature
-#         )
-#
-#         answer = chat.choices[0].message.content
-#
-#         # Проверка ответа и вызов callback-функции
-#         if "Для записи на услуги" in answer:
-#             await message.answer("Хотите записаться на услугу?", reply_markup=inline_builder(order))
-#         else:
-#             await message.answer(answer)
-#
-#     except Exception as e:
-#         logging.error(e)
+def chatgpt_prompt(user_input):
+    system_messages = [{
+        "role": "system",
+        "content": (
+            "Ты - бот chatGPT встроенный в чат бот BotNest (мы занимаемся разработкой телеграм ботов под ключ), "
+            "для демонстрации возможностей ИИ в телеграм ботах. "
+            "Ты должен помогать отвечать на вопросы пользователей и после каждого ответа на запрос пользователя "
+            "упоминать что они могут реализовать такой же бот с ChatGPT заказав у нас разработку телеграм бота под ключ"
+        )
+    }, {"role": "user", "content": user_input}]
+
+    return system_messages

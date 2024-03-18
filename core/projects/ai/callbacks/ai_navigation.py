@@ -11,7 +11,7 @@ from core.callbacks.navigation import query_message_photo
 
 from core.database.requests import Database
 from core.handlers.callback import *
-from core.projects.ai.callbacks.ai_assistant import create_chatgpt_prompt
+from core.projects.ai.callbacks.ai_assistant import create_chatgpt_prompt, chatgpt_prompt
 from core.projects.ai.keyboards.builder import *
 
 router = Router()
@@ -129,13 +129,14 @@ async def process_ai_question(message: Message, bot: Bot):
 
     try:
         user_input = message.text
+        prompt = chatgpt_prompt(user_input)
 
         # Установка ограничений для размера ответа и температуры
         temperature = 0.4 
 
         chat = openai.chat.completions.create(
             model='gpt-3.5-turbo',
-            messages=user_input,
+            messages=prompt,
             temperature=temperature
         )
 
