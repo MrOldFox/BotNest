@@ -119,7 +119,7 @@ async def process_ai_question(message: Message, bot: Bot, state: FSMContext):
 
 
 @router.message(AI_ASS.waiting_for_gpt_ass, F.text)
-async def process_ai_question(message: Message, bot: Bot):
+async def process_gpt_question(message: Message, bot: Bot, state: FSMContext):
     # Проверяем наличие токенов перед выполнением запроса
     has_tokens = await db.check_user_tokens(message.from_user.id, "gpt")
     if not has_tokens:
