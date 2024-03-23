@@ -41,7 +41,7 @@ class UserRole(enum.Enum):
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
-    telegram_id = Column(Integer, unique=True, nullable=False)
+    telegram_id = Column(BigInteger, unique=True, nullable=False)
     first_visit = Column(DateTime, default=datetime.datetime.utcnow)
     last_visit = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     last_message_id = Column(BigInteger, nullable=True)
