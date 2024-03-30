@@ -51,6 +51,12 @@ class User(Base):
     max_tokens_voice_gen = Column(Integer, default=5)
 
 
+class ServiceRequestStatus(Enum):
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    COMPLETED = 'completed'
+    CANCELLED = 'cancelled'
+
 class OrderRequest(Base):
     __tablename__ = 'order_requests'
     id = Column(Integer, primary_key=True)
@@ -60,10 +66,10 @@ class OrderRequest(Base):
     email = Column(String(50))
     description = Column(String(1000))
     contact_via_telegram = Column(Boolean)
-
-
-
-
+    request_date = Column(DateTime, default=datetime.utcnow)
+    completion_date = Column(DateTime, nullable=True)
+    details = Column(String(1024), nullable=True) # Детали заявки
+    status = Column(Enum(ServiceRequestStatus), default=ServiceRequestStatus.PENDING, nullable=False)
 
 class Brand(Base):
     __tablename__ = 'brands'
