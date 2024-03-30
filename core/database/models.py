@@ -12,6 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy import Column, Integer, Text, String, DECIMAL, ForeignKey, TIMESTAMP, Boolean
 from sqlalchemy.orm import relationship
+from zoneinfo import ZoneInfo
 
 
 from config_reader import config
@@ -51,7 +52,7 @@ class User(Base):
     max_tokens_voice_gen = Column(Integer, default=5)
 
 
-class ServiceRequestStatus(Enum):
+class ServiceRequestStatus(enum.Enum):
     PENDING = 'pending'
     APPROVED = 'approved'
     COMPLETED = 'completed'
@@ -66,10 +67,15 @@ class OrderRequest(Base):
     email = Column(String(50))
     description = Column(String(1000))
     contact_via_telegram = Column(Boolean)
-    request_date = Column(DateTime, default=datetime.utcnow)
+    request_date = Column(DateTime, default=datetime.datetime.utcnow)
     completion_date = Column(DateTime, nullable=True)
-    details = Column(String(1024), nullable=True) # Детали заявки
+    details = Column(Text, nullable=True) # Детали заявки
+    responsible_id = Column(Integer, ForeignKey('users.id'), nullable=True)
     status = Column(Enum(ServiceRequestStatus), default=ServiceRequestStatus.PENDING, nullable=False)
+
+    # Отношения
+    user = relationship("User", foreign_keys=[user_id], backref="user_requests")
+    responsible = relationship("User", foreign_keys=[responsible_id], backref="responsible_requests")
 
 class Brand(Base):
     __tablename__ = 'brands'
