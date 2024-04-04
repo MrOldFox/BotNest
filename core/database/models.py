@@ -53,16 +53,15 @@ class User(Base):
 
 
 class ServiceRequestStatus(enum.Enum):
-    PENDING = 'pending'
-    APPROVED = 'approved'
-    COMPLETED = 'completed'
-    CANCELLED = 'cancelled'
+    pending = 'pending'
+    approved = 'approved'
+    completed = 'completed'
+    cancelled = 'cancelled'
 
 class OrderRequest(Base):
     __tablename__ = 'order_requests'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship("User")
     phone = Column(String(20))
     email = Column(String(50))
     description = Column(String(1000))
@@ -71,7 +70,7 @@ class OrderRequest(Base):
     completion_date = Column(DateTime, nullable=True)
     details = Column(Text, nullable=True) # Детали заявки
     responsible_id = Column(Integer, ForeignKey('users.id'), nullable=True)
-    status = Column(Enum(ServiceRequestStatus), default=ServiceRequestStatus.PENDING, nullable=False)
+    status = Column(Enum(ServiceRequestStatus), default=ServiceRequestStatus.pending, nullable=False)
 
     # Отношения
     user = relationship("User", foreign_keys=[user_id], backref="user_requests")
