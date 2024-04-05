@@ -70,6 +70,7 @@ examples_type = [
 
 service_type = [
     [['Из текста в голос', 'text2voice']],
+    [['Управление группой', 'uk_main']],
     [['Назад', 'bot_examples']]
 ]
 

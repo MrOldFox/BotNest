@@ -1,12 +1,14 @@
 from datetime import datetime
 import asyncio
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.enums import ChatType
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 
+from core.callbacks.navigation import query_message_photo
 from core.projects.service.uk.database.requests import Database
 from core.projects.service.uk.filters.uk_filter import ChatTypeFilter
+from core.projects.service.uk.keyboards.builders import uk_menu
 
 router = Router()
 
@@ -19,6 +21,27 @@ ALLOWED_HASHTAGS = {
     '#предложение': 'Предложение принято к рассмотрению',
     '#уборка': 'Замечания по уборке устранены'
 }
+
+
+@router.callback_query(F.data == 'uk_main')
+async def card_main(query: CallbackQuery, bot: Bot):
+    text = (
+        f"<b>🏢 УК/ТСЖ бот</b>\n\n"
+        f"Представляем телеграм-бота для управления заявками в чат-группах УК и ТСЖ. Этот инструмент превращает "
+        f"обычные чаты в мощные платформы для управления обращениями жителей. С его помощью можно легко подавать "
+        f"и отслеживать заявки прямо в процессе общения, используя специальные хэштеги. Наш демонстрационный "
+        f"проект показывает, как эффективно обрабатывать сообщения о авариях, ремонте, уборке и других обращениях,"
+        f"делая процесс удобным и оперативным.\n\n"
+        f"Посмотреть демонстрационную группу и узнать больше о возможностях таких ботов можно "
+        f"перейдя по ссылке в сообщении.\n\n"
+        f"Вдохновитесь примером и создайте собственный бот для вашего сообщества, реализуя любые идеи и задачи, "
+        f"ограничиваясь только вашей фантазией."
+    )
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/uk_logo.webp'
+
+    await query_message_photo(query, bot, text, image_path, uk_menu)
+
+
 
 @router.message(ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def handle_group_message(message: Message):
