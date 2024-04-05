@@ -166,6 +166,21 @@ class LegalNews(Base):
     publication_date = Column(TIMESTAMP, nullable=False)  # Дата публикации новости
     photo_url = Column(String(255), nullable=True)  # Ссылка на фотографию для новости
 
+class RequestStatus(enum.Enum):
+    accepted = "accepted"
+    processing = "processing"
+    completed = "completed"
+
+class Request(Base):
+    __tablename__ = 'requests'
+
+    id = Column(Integer, primary_key=True)
+    telegram_id = Column(Integer, nullable=False)
+    text = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    hashtag = Column(String, nullable=False)
+    status = Column(Enum(RequestStatus), default=RequestStatus.accepted)
+
 async def async_main():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
