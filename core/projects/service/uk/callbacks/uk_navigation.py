@@ -72,10 +72,10 @@ async def handle_group_message(message: Message):
         )
 
         # Удаление сообщений после задержки
-        # await asyncio.sleep(20)
-        # await message.delete()
-        # await response_msg.delete()
-        # await closing_response_msg.delete()
+        await asyncio.sleep(20)
+        await message.delete()
+        await response_msg.delete()
+        await closing_response_msg.delete()
     else:
         welcome_message = (
             "чтобы протестировать возможности бота - используйте любой доступный хэштег:\n\n"
