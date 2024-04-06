@@ -165,7 +165,7 @@ async def checkout(query: CallbackQuery, bot: Bot):
         need_phone_number=True,
         need_shipping_address=True,
         need_email=True,
-        start_parameter='sub',
+        start_parameter='phone',
         send_email_to_provider=False,
         send_phone_number_to_provider=False,
         provider_data=None,
@@ -178,46 +178,48 @@ async def checkout(query: CallbackQuery, bot: Bot):
     await update_last_message_id(bot, send_message.message_id, query.from_user.id)
     await query.answer()
 
-@router.pre_checkout_query()
-async def pre_checkout_query(query: PreCheckoutQuery, bot: Bot):
-    if query.invoice_payload.startswith("phone"):
-        await bot.answer_pre_checkout_query(query.id, ok=True)
-        print('ok')
-
-@router.message(F.successful_payment)
-async def successful_payment(message: Message, bot: Bot):
-    payload = message.successful_payment.invoice_payload
-    if payload.startswith("phone"):
-        telegram_id = message.from_user.id
-
-        user_id = message.from_user.id
-
-        # Шаг 1: Получаем товары из корзины пользователя
-        cart_items = await db.get_checkout_items(user_id)
-        if cart_items:
-            # Шаг 2: Добавляем запись в PurchaseHistory
-            total_amount = message.successful_payment.total_amount / 100  # Telegram возвращает сумму в копейках
-            purchase_id = await db.add_purchase_history(user_id, total_amount, cart_items)
-
-            # Шаг 3: Для каждого товара из корзины добавляем запись в PurchaseDetail
-            for cart_item, product_name, stock_quantity, price, color in cart_items:
-                await db.add_purchase_detail(purchase_id, cart_item.product_id, cart_item.quantity, price)
-
-        await db.clear_user_cart(user_id)
-
-        text = (
-            f"<b>💬 Успешно!</b> \n\n"
-            f"Вы успешно получили пробную оплату товара, при этом вы потратили {message.successful_payment.total_amount // 100} виртуальных {message.successful_payment.currency}.\n\n"
-            f"Если хотите получить такой же бот, то можете подать заявку ниже."
-        )
-        image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/pay.png?_t=1707660307'
-        sent_message = await bot.send_photo(
-            message.chat.id,
-            photo=image_path,  # Или просто строка с URL изображения
-            caption=text,
-            reply_markup=inline_builder(buy)
-        )
-        await update_last_message_id(bot, sent_message.message_id, telegram_id)
+#
+# @router.pre_checkout_query()
+# async def pre_checkout_query(query: PreCheckoutQuery, bot: Bot):
+#     if query.invoice_payload.startswith("phone"):
+#         print('ok')
+#         await bot.answer_pre_checkout_query(query.id, ok=True)
+#
+#
+# @router.message(F.successful_payment)
+# async def successful_payment(message: Message, bot: Bot):
+#     payload = message.successful_payment.invoice_payload
+#     if payload.startswith("phone"):
+#         telegram_id = message.from_user.id
+#
+#         user_id = message.from_user.id
+#
+#         # Шаг 1: Получаем товары из корзины пользователя
+#         cart_items = await db.get_checkout_items(user_id)
+#         if cart_items:
+#             # Шаг 2: Добавляем запись в PurchaseHistory
+#             total_amount = message.successful_payment.total_amount / 100  # Telegram возвращает сумму в копейках
+#             purchase_id = await db.add_purchase_history(user_id, total_amount, cart_items)
+#
+#             # Шаг 3: Для каждого товара из корзины добавляем запись в PurchaseDetail
+#             for cart_item, product_name, stock_quantity, price, color in cart_items:
+#                 await db.add_purchase_detail(purchase_id, cart_item.product_id, cart_item.quantity, price)
+#
+#         await db.clear_user_cart(user_id)
+#
+#         text = (
+#             f"<b>💬 Успешно!</b> \n\n"
+#             f"Вы успешно получили пробную оплату товара, при этом вы потратили {message.successful_payment.total_amount // 100} виртуальных {message.successful_payment.currency}.\n\n"
+#             f"Если хотите получить такой же бот, то можете подать заявку ниже."
+#         )
+#         image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/shop/photo/pay.png?_t=1707660307'
+#         sent_message = await bot.send_photo(
+#             message.chat.id,
+#             photo=image_path,  # Или просто строка с URL изображения
+#             caption=text,
+#             reply_markup=inline_builder(buy)
+#         )
+#         await update_last_message_id(bot, sent_message.message_id, telegram_id)
 
 
 @router.callback_query(F.data.startswith("search"))

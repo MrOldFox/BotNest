@@ -46,5 +46,5 @@ class Database:
             if user:
                 # Устанавливаем статус подписки активным и обновляем дату истечения подписки
                 user.subscription_active = True
-                user.subscription_expires = datetime.utcnow() + timedelta(days=duration_days)
+                user.subscription_expires = datetime.datetime.utcnow() + timedelta(days=duration_days)
                 await session.commit()

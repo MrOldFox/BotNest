@@ -6,7 +6,6 @@ nosub_key_main = [
 
 sub_key_main = [
     [['Мои уроки', 'ai_examples']],
-    [['Информация о подписке', 'info_examples']],
     [['Назад', 'info_examples']]
 ]
 
