@@ -91,7 +91,7 @@ async def checkout(query: CallbackQuery, bot: Bot):
         chat_id=query.message.chat.id,
         title='Оплата подписки NestLearn',
         description=text,
-        payload='subscription',
+        payload='sub',
         provider_token='381764678:TEST:73182',
         currency='rub',
         prices=prices,
@@ -116,16 +116,15 @@ async def checkout(query: CallbackQuery, bot: Bot):
 @router.pre_checkout_query()
 async def handle_pre_checkout_query(query: PreCheckoutQuery, bot: Bot):
     # Проверяем, что payload начинается с "subscription_", что указывает на оплату подписки
-    if query.invoice_payload == "subscription":
+    if query.invoice_payload.startswith("sub"):
         # Оплата подписки подтверждена
         print('OK')
         await bot.answer_pre_checkout_query(pre_checkout_query_id=query.id, ok=True)
 
 @router.message(F.successful_payment)
 async def handle_successful_payment(message: Message, bot: Bot):
-
     payload = message.successful_payment.invoice_payload
-    if payload == "subscription":
+    if payload.startswith("sub"):
         print('OK2')
         user_id = message.from_user.id
         # Активируем подписку для пользователя через метод класса Database
