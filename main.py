@@ -10,6 +10,7 @@ from core.handlers import bot_messages, user_commands
 from core.callbacks import pagination, navigation, order
 from core.projects.ai.callbacks import ai_assistant, ai_navigation
 from core.projects.business.business_card.callbacks import card_navigation
+from core.projects.business.subscribe_bot.callbacks import sub_navigation
 from core.projects.games.lostorder.callbacks import rolldice
 from core.projects.games.lostorder.handlers import gamenavigation
 from core.projects.info.business_info.callbacks import info_navigation
@@ -43,6 +44,7 @@ async def main():
         info_navigation.router,
         shop_navigation.router,
         v2t_navigation.router,
+        sub_navigation.router,
         card_navigation.router
     )
 

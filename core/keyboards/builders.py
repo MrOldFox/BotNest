@@ -64,7 +64,7 @@ cancel_order = [
 examples_type = [
     [['ИИ боты', 'ai_examples'], ['Информационные', 'info_examples']],
     [['Игровые', 'game_examples'], ['Для бизнеса', 'business_examples']],
-    [['Инструменты', 'service_examples']],
+    [['Сервисные', 'service_examples']],
     [['Назад', 'main_menu']]
 ]
 
@@ -76,6 +76,7 @@ service_type = [
 
 info_type = [
     [['Валюты и Акции', 'business_info']],
+    [['Обучение по подписке', 'sub_main']],
     [['Назад', 'bot_examples']]
 ]
 

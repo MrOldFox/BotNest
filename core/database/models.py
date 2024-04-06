@@ -50,7 +50,8 @@ class User(Base):
     max_tokens_gpt = Column(Integer, default=5)
     max_tokens_gpt_assistant = Column(Integer, default=5)
     max_tokens_voice_gen = Column(Integer, default=5)
-
+    subscription_active = Column(Boolean, default=False)
+    subscription_expires = Column(DateTime)
 
 class ServiceRequestStatus(enum.Enum):
     pending = 'pending'
