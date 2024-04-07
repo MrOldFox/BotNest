@@ -19,59 +19,42 @@ router = Router()
 db = Database()
 
 
-@router.callback_query(F.data == '123')
-async def card_main(query: CallbackQuery, bot: Bot):
-    text = (
-        f"<b>🏢 УК/ТСЖ бот</b>\n\n"
-        f"Представляем телеграм-бота для управления заявками в чат-группах УК и ТСЖ. Этот инструмент превращает "
-        f"обычные чаты в мощные платформы для управления обращениями жителей. С его помощью можно легко подавать "
-        f"и отслеживать заявки прямо в процессе общения, используя специальные хэштеги. Наш демонстрационный "
-        f"проект показывает, как эффективно обрабатывать сообщения о авариях, ремонте, уборке и других обращениях,"
-        f"делая процесс удобным и оперативным.\n\n"
-        f"Посмотреть демонстрационную группу и узнать больше о возможностях таких ботов можно "
-        f"перейдя по ссылке в сообщении.\n\n"
-        f"Вдохновитесь примером и создайте собственный бот для вашего сообщества, реализуя любые идеи и задачи, "
-        f"ограничиваясь только вашей фантазией."
-    )
-    image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/uk_logo.webp'
-
-    await query_message_photo(query, bot, text, image_path, uk_menu)
-
 
 @router.callback_query(F.data == 'sub_main')
 async def main_menu_handler(query: CallbackQuery, bot: Bot):
     telegram_id = query.from_user.id
     subscription_info = await db.check_user_subscription(telegram_id)
-    subscription_active, subscription_expires = subscription_info if subscription_info else (False, None)
+    subscription_active = subscription_info if subscription_info else False
+
 
     # Текст сообщения в зависимости от статуса подписки
     if subscription_active:
-        status_text = "🟢 Ваша подписка активна до " + subscription_expires.strftime('%Y-%m-%d %H:%M')
-        menu_buttons = [
-            [("Мои уроки", "my_lessons")],
-        ]
+        status_text = "🟢 Ваша подписка активна"
     else:
-        status_text = "🔴 У вас нет активной подписки. Подпишитесь, чтобы получить доступ к урокам."
-        menu_buttons = [
-            [("Подписаться", "subscribe")],
-        ]
+        status_text = "🔴 У вас нет активной подписки. \n\nПодпишитесь, чтобы получить доступ к урокам."
 
     text = (
         f"🌟 <b>Добро пожаловать в NestLearn!</b>\n\n"
         f"Ваш ключ к миру знаний и секретов успешного ведения телеграм-каналов ждет вас! 🚀\n"
         f"Мы предлагаем эксклюзивные уроки и гайды, которые помогут вашему каналу вырасти и зажечь аудиторию.\n\n"
         f"{status_text}\n\n"
+        f"<i>Данный бот является простым примером реализации доступа к вашему контенту по платной подписке.\n"
+        f"Мы поможем вам монетизировать любую группу или бота в телеграм!</i>"
     )
 
     if subscription_active:
         await query_message_photo(query, bot, text,
-                                  "https://botnest.ru/wp-content/uploads/2024/botnest/images/NestLearn.webp",
+                                  "https://botnest.ru/wp-content/uploads/2024/botnest/images/learnnestbot.png",
                                   sub_key_main)
     else:
         await query_message_photo(query, bot, text,
                                   "https://botnest.ru/wp-content/uploads/2024/botnest/images/learnnestbot.png",
                                   nosub_key_main)
 
+
+@router.callback_query(F.data == 'sub_learn')
+async def order_history(query: CallbackQuery, bot: Bot):
+    await query.answer("Здесь могли быть ваши уроки 😎", show_alert=True)
 
 @router.callback_query(F.data == "subscription")
 async def checkout(query: CallbackQuery, bot: Bot):
@@ -116,17 +99,14 @@ async def checkout(query: CallbackQuery, bot: Bot):
 @router.pre_checkout_query()
 async def handle_pre_checkout_query(query: PreCheckoutQuery, bot: Bot):
     if query.invoice_payload.startswith("sub"):
-        print('OK')
         await bot.answer_pre_checkout_query(query.id, ok=True)
     elif query.invoice_payload.startswith("phone"):
-        print('ok')
         await bot.answer_pre_checkout_query(query.id, ok=True)
 
 @router.message(F.successful_payment)
 async def handle_successful_payment(message: Message, bot: Bot):
     payload = message.successful_payment.invoice_payload
     if payload.startswith("sub"):
-        print('OK2')
         user_id = message.from_user.id
         # Активируем подписку для пользователя через метод класса Database
         await db.activate_subscription(user_id)  # Обновленный вызов функции активации подписки

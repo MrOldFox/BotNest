@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta
 import asyncio
+
+import aiocron
+from sqlalchemy import update
 from sqlalchemy.future import select
 
 from core.database.models import *
@@ -16,7 +19,6 @@ class Database:
                 select(User)
                 .where(User.telegram_id == telegram_id)
                 .where(User.subscription_active == True)
-                .where(User.subscription_expires > datetime.datetime.utcnow())
             )
             user = result.scalar()
             return user is not None
@@ -24,19 +26,18 @@ class Database:
     async def check_user_subscription(self, telegram_id: int):
         async with async_session() as session:
             result = await session.execute(
-                select(User.subscription_active, User.subscription_expires)
+                select(User.subscription_active)
                 .where(User.telegram_id == telegram_id)
             )
-            user_subscription = result.first()
+            user_subscription = result.scalar_one_or_none()
             return user_subscription
 
-    async def activate_subscription(self, telegram_id: int, duration_days: int = 1):
+    async def activate_subscription(self, telegram_id: int):
         """
         Активирует подписку пользователя на указанное количество дней.
 
         Args:
             telegram_id (int): Telegram ID пользователя.
-            duration_days (int, optional): Количество дней активности подписки. Defaults to 1.
         """
         async with async_session() as session:
             # Получаем пользователя по telegram_id
@@ -46,5 +47,4 @@ class Database:
             if user:
                 # Устанавливаем статус подписки активным и обновляем дату истечения подписки
                 user.subscription_active = True
-                user.subscription_expires = datetime.datetime.utcnow() + timedelta(days=duration_days)
                 await session.commit()

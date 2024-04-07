@@ -1,10 +1,15 @@
 import asyncio
 import logging
+from datetime import datetime
 
+import aiocron
 from aiogram import Bot, Dispatcher, Router
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from sqlalchemy import update
 
 from config_reader import config
-from core.database.models import async_main
+from core.database.models import async_main, async_session, User
 
 from core.handlers import bot_messages, user_commands
 from core.callbacks import pagination, navigation, order
@@ -22,7 +27,7 @@ from core.utils.commands import set_commands
 
 async def main():
     await async_main()
-    bot = Bot(config.bot_token.get_secret_value(), parse_mode="HTML")
+    bot = Bot(config.bot_token.get_secret_value(), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
 
     # Установка команд бота
