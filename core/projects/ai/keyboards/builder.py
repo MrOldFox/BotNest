@@ -33,7 +33,8 @@ def inline_builder(button_layout: List[List[Union[str, List]]]) -> InlineKeyboar
 
 
 order = [
-    [['Да', 'order'], ['Нет', 'quit']]
+    [['Да', 'order']],
+    [['Нет', 'ai_helper']]
 ]
 
 ai = [

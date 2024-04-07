@@ -109,7 +109,7 @@ async def process_ai_question(message: Message, bot: Bot, state: FSMContext):
 
         # Проверка ответа и вызов
         if answer.lower().find("запись на услугу") != -1:
-            sent_message = await message.answer("Хотите записаться на услугу?", reply_markup=inline_builder(order))
+            sent_message = await message.answer("Хотите записаться на услугу? При положительном выборе вы перейдете в меню заказа бота", reply_markup=inline_builder(order))
             await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
         else:
             sent_message = await message.answer(answer, reply_markup=inline_builder(quit_ai))
