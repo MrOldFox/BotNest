@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import asyncio
 
-import aiocron
 from sqlalchemy import update
 from sqlalchemy.future import select
 
