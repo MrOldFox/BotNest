@@ -2,7 +2,6 @@ import asyncio
 import logging
 from datetime import datetime
 
-import aiocron
 from aiogram import Bot, Dispatcher, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
