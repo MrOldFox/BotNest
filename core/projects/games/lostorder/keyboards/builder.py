@@ -56,7 +56,29 @@ EnemyAttack = [
 
 RiverEncounter = [
     [['Подойти к незнакомцу', 'start_encounter']],
-    [['Продолжить путь', 'village']]
+    [['Продолжить путь', 'start_encounter_fail']]
+]
+
+stranger_choice_success = [
+    [['Продолжить путь', 'start_encounter_success']]
+]
+
+stranger_choice_fail = [
+    [['Продолжить путь', 'start_encounter_fail']]
+]
+
+WolfEnemyAttack = [
+    [['Защититься', 'wolf_defense']]
+]
+
+stranger_choice = [
+    [['Убедить рассказать больше', 'persuade_to_tell_more']],
+    [['Продолжить путь', 'start_encounter_fail']]
+]
+
+WolfEncounter = [
+    [['Подойти к незнакомцу', 'start_encounter']],
+    [['Продолжить путь', 'start_encounter_fail']]
 ]
 
 ToVillage = [
