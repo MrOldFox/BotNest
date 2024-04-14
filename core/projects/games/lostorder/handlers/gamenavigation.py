@@ -49,10 +49,10 @@ async def start_game(query: CallbackQuery, state: FSMContext, bot: Bot):
         "<b>Легенда Потерянного Ордена</b> \n\n"
         "Ты - отважный рыцарь, последний защитник своего обесчещенного ордена.\n\n"
         "После долгих лет борьбы и скитаний ты отправляешься в путешествие, чтобы открыть "
-        "для себя древние тайны и восстановить честь ордена."
+        "для себя древние тайны и восстановить честь ордена. "
         "Твой путь начинается у края известного мира, на перекрестке древних дорог...\n\n"
         "<i>Данная игра создана для демонстрации возможностей при создании игровых ботов.\n\n"
-        "Механики:\nПри броске кубиков успешным результатом считается все цифры больше 3</i>"
+        "<b>Механики:\nПри броске кубиков успешным результатом считается все значения кубика выше 3.</b></i>"
     )
 
     # Путь к изображению или URL
@@ -113,7 +113,7 @@ async def order(query: CallbackQuery, state: FSMContext, bot: Bot):
         text = f"Результат: {dice_value}, Успех!\n\nВнимательно осматриваясь, ты " \
                "замечаешь <b>Теневого Рыскателя</b> и осторожно обходишь его."
 
-        sent_message = await choose_path(text, image_path1, query, ToVillage)
+        sent_message = await choose_path(text, image_path1, query, bad_caravan)
     else:
         text = f"Результат: {dice_value}, Недача...\n\nТени леса внезапно сгущаются, и из их глубины, " \
                "там, где свет солнца не проникает, возникает существо, как будто" \
@@ -141,7 +141,7 @@ async def start_combat(query: CallbackQuery, state: FSMContext, bot: Bot) -> Non
         text = f"Результат: {dice_value}, Успех\n\nТвой меч находит свою цель! Теневой Рыскатель ранен и скрывается " \
                f"в ближайшей тени деревьев."
 
-        sent_message = await choose_path(text, image_path1, query, ToVillage)
+        sent_message = await choose_path(text, image_path1, query, safe_caravan)
         await state.set_state(GameStates.Village)
     else:
         await state.set_state(CombatStates.EnemyAttack)
@@ -189,7 +189,7 @@ async def defense(query: CallbackQuery, state: FSMContext, bot: Bot):
         text = f"Результат: {dice_value}, Успех\n\nТы успешно защищаешься от атаки врага! И пока Теневой Рыскатель " \
                f"пытается понять что произошло - вам удается спрятаться за ближайшим деревом."
 
-        sent_message = await choose_path(text, image_path1, query, ToVillage)
+        sent_message = await choose_path(text, image_path1, query, safe_caravan)
     else:
         text = f"Результат: {dice_value}, Недача...\n\nТеневой Рыскатель пробивает твою защиту и наносит урон!\n" \
                f"К сожалению вы сильно ранены и не можете продолжать путешествие. " \
@@ -201,6 +201,35 @@ async def defense(query: CallbackQuery, state: FSMContext, bot: Bot):
 
     await query.answer()
     await update_last_message_id(bot, sent_message.message_id, query.from_user.id)
+
+
+@router.callback_query(F.data == 'defense_shadowstalker')
+async def player_attack(query: CallbackQuery, state: FSMContext, bot: Bot):
+    text = (
+        "Твой путь пересекается с караваном торговцев, который уверенно движется в направлении города. "
+        "Ты утешаешь себя мыслью, что твоя схватка с Теневым Рыскателем, возможно, отвлекла его от каравана, "
+        "спасая многие жизни."
+    )
+
+    # Путь к изображению или URL
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/game/lostorder/safecaravan.webp'
+
+    await query_message_photo(query, bot, text, image_path, ToVillage)
+
+
+@router.callback_query(F.data == 'skip_shadowstalker')
+async def player_attack(query: CallbackQuery, state: FSMContext, bot: Bot):
+    text = (
+        "Продвигаясь по тропе, ты натыкаешься на уничтоженный торговый караван. Оставленный без присмотра, "
+        "он выглядит так, будто на него напал Теневой Рыскатель. Все вокруг разрушено и нет ни звука жизни, "
+        "вопрос мучает тебя:\n\n«Мог ли я предотвратить это?»"
+    )
+
+    # Путь к изображению или URL
+    image_path = 'https://botnest.ru/wp-content/uploads/2024/game/lostorder/badcaravan.webp'
+
+    await query_message_photo(query, bot, text, image_path, ToVillage)
+
 
 
 # Сцена при выборе леса
@@ -377,7 +406,7 @@ async def defense(query: CallbackQuery, state: FSMContext, bot: Bot):
     enemy_attack_value = data.get('enemy_attack_value')
     dice_value = message.dice.value
 
-    image_path1 = 'https://botnest.ru/wp-content/uploads/2024/game/lostorder/escapehouse.jpg'
+    image_path1 = 'https://botnest.ru/wp-content/uploads/2024/game/lostorder/escapewolf.webp'
     image_path2 = 'https://botnest.ru/wp-content/uploads/2024/game/lostorder/wolfend.webp'
 
     if dice_value > enemy_attack_value:

@@ -33,7 +33,8 @@ def inline_builder(button_layout: List[List[Union[str, List]]]) -> InlineKeyboar
 
 
 RollDice = [
-    [['Бросить кубик', 'dice']]
+    [['Бросить кубик', 'dice']],
+    [['Выход', 'game_examples']]
 ]
 
 # StartGame = [
@@ -47,47 +48,67 @@ StartGame = [
 ]
 
 ChoosingPath = [
-    [['Через лес', 'forest'], ['Вдоль реки', 'river']]
+    [['Через лес', 'forest'], ['Вдоль реки', 'river']],
+    [['Выход', 'game_examples']]
 ]
 
 EnemyAttack = [
-    [['Защититься', 'defense']]
+    [['Защититься', 'defense']],
+    [['Выход', 'game_examples']]
 ]
 
 RiverEncounter = [
     [['Подойти к незнакомцу', 'start_encounter']],
-    [['Продолжить путь', 'start_encounter_fail']]
+    [['Продолжить путь', 'start_encounter_fail']],
+    [['Выход', 'game_examples']]
 ]
 
 stranger_choice_success = [
-    [['Продолжить путь', 'start_encounter_success']]
+    [['Продолжить путь', 'start_encounter_success']],
+    [['Выход', 'game_examples']]
 ]
 
 stranger_choice_fail = [
-    [['Продолжить путь', 'start_encounter_fail']]
+    [['Продолжить путь', 'start_encounter_fail']],
+    [['Выход', 'game_examples']]
 ]
 
 WolfEnemyAttack = [
-    [['Защититься', 'wolf_defense']]
+    [['Защититься', 'wolf_defense']],
+    [['Выход', 'game_examples']]
+]
+
+bad_caravan = [
+    [['Продолжить путь', 'skip_shadowstalker']],
+    [['Выход', 'game_examples']]
+]
+
+
+safe_caravan = [
+    [['Продолжить путь', 'defense_shadowstalker']],
+    [['Выход', 'game_examples']]
 ]
 
 stranger_choice = [
     [['Убедить рассказать больше', 'persuade_to_tell_more']],
-    [['Продолжить путь', 'start_encounter_fail']]
+    [['Продолжить путь', 'start_encounter_fail']],
+    [['Выход', 'game_examples']]
 ]
 
 WolfEncounter = [
     [['Подойти к незнакомцу', 'start_encounter']],
-    [['Продолжить путь', 'start_encounter_fail']]
+    [['Продолжить путь', 'start_encounter_fail']],
+    [['Выход', 'game_examples']]
 ]
 
 ToVillage = [
-    [['Продолжить путь', 'village']]
+    [['Продолжить путь', 'village']],
+    [['Выход', 'game_examples']]
 ]
 
 Quit = [
     [['Начать сначала', 'start_game']],
-    [['Сдаться...', 'main_menu']]
+    [['Сдаться...', 'main_menu']],
 ]
 
 VillagePath = [
