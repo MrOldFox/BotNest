@@ -31,19 +31,3 @@ class Database:
             user_subscription = result.scalar_one_or_none()
             return user_subscription
 
-    async def activate_subscription(self, telegram_id: int):
-        """
-        Активирует подписку пользователя на указанное количество дней.
-
-        Args:
-            telegram_id (int): Telegram ID пользователя.
-        """
-        async with async_session() as session:
-            # Получаем пользователя по telegram_id
-            result = await session.execute(select(User).where(User.telegram_id == telegram_id))
-            user = result.scalar()
-
-            if user:
-                # Устанавливаем статус подписки активным и обновляем дату истечения подписки
-                user.subscription_active = True
-                await session.commit()
