@@ -14,6 +14,7 @@ from core.handlers import bot_messages, user_commands
 from core.callbacks import pagination, navigation, order
 from core.projects.ai.callbacks import ai_assistant, ai_navigation
 from core.projects.business.business_card.callbacks import card_navigation
+from core.projects.business.channel_check.callbacks import channel_navigation
 from core.projects.business.subscribe_bot.callbacks import sub_navigation
 from core.projects.games.lostorder.callbacks import rolldice
 from core.projects.games.lostorder.handlers import gamenavigation
@@ -49,7 +50,8 @@ async def main():
         shop_navigation.router,
         v2t_navigation.router,
         sub_navigation.router,
-        card_navigation.router
+        card_navigation.router,
+        channel_navigation.router
     )
 
     await bot.delete_webhook(drop_pending_updates=True)

@@ -76,7 +76,8 @@ service_type = [
 
 info_type = [
     [['Валюты и Акции', 'business_info']],
-    [['Обучение по подписке', 'sub_main']],
+    [['Платная подписка', 'sub_main']],
+    [['Подписка на канал', 'channel_main']],
     [['Назад', 'bot_examples']]
 ]
 
