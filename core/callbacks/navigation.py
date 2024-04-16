@@ -1,11 +1,12 @@
 import asyncio
 import json
+from datetime import datetime
 
 from aiogram.fsm.state import StatesGroup, State
 
 import logging
 
-from core.database.models import OrderRequest, UserRole
+from core.database.models import OrderRequest, UserRole, ServiceRequestStatus
 from core.database.requests import Database
 from core.handlers.user_commands import *
 from core.keyboards.reply import *
@@ -32,10 +33,10 @@ async def order(message: Union[Message, CallbackQuery], bot: Bot):
         f"Это поможет нам лучше понять ваши потребности и подготовить предложение, максимально соответствующее вашим "
         f"ожиданиям.\n\n"
         f"После отправки анкеты мы свяжемся с вами для обсуждения деталей проекта "
-        f"и определения следующих шагов.\n\n"
+        f"и определения следующих шагов. Либо вы можете <a href='https://t.me/ryzkov_dv'>написать нам в телеграм</a> и напрямую обсудить детали проекта.\n\n"
+        f"Нажмите <b>'Заполнить анкету'</b>, чтобы перейти к анкете, или <b>'Отмена'</b>, "
+        f"если вы хотите вернуться в предыдущее меню.")
 
-        f"Нажмите <b>'Заполнить анкету'</b>, чтобы перейти к анкете, или <b>'Отмена'</b>, если вы хотите вернуться в предыдущее меню."
-    )
     image_path = 'https://botnest.ru/wp-content/uploads/2024/botnest/images/order.png'
 
     chat_id = message.message.chat.id if isinstance(message, CallbackQuery) else message.chat.id
@@ -45,11 +46,13 @@ async def order(message: Union[Message, CallbackQuery], bot: Bot):
         chat_id,
         photo=image_path,  # Или просто строка с URL изображения
         caption=text,
-        reply_markup=order_keyboard
+        reply_markup=order_keyboard,
+        parse_mode='HTML'
     )
 
     # Вызов функции update_last_message_id
     await update_last_message_id(bot, sent_message.message_id, chat_id)
+
 
 
 @router.message(F.successful_payment)
@@ -102,30 +105,36 @@ async def handle_successful_payment(message: Message, bot: Bot):
         )
         await update_last_message_id(bot, sent_message.message_id, telegram_id)
 
+
 @router.message(F.web_app_data)
 async def web_order(message: Message, bot: Bot, state: FSMContext):
     res = json.loads(message.web_app_data.data)
-    sent_message = await message.answer(f'Спасибо {res["name"]}, мы свяжемся с вами в ближайшее время! 🤗\n\n'
-                                        f'<i>Возвращаемся в главное меню...</i>')
+    sent_message = await message.answer(
+        f"Спасибо {res['name']}, мы свяжемся с вами в ближайшее время! 🤗\n\n"
+        "<i>Возвращаемся в главное меню...</i>"
+    )
     await update_last_message_id(bot, sent_message.message_id, message.from_user.id)
     await asyncio.sleep(5)
     await start(message, bot, state)
 
-    # Создание сессии
+    # Создание сессии и обработка данных
     async with async_session() as session:
-        # Выполнение запроса
+        # Получение пользователя по Telegram ID
         result = await session.execute(select(User).where(User.telegram_id == message.from_user.id))
-
-        # Получение первого результата (если он есть)
         user = result.scalar()
+
         if user:
-            # Пользователь найден
+            # Создание новой заявки
             order_request = OrderRequest(
                 user_id=user.id,
                 phone=res["phone"],
                 email=res["email"],
                 description=res["description"],
-                contact_via_telegram=res["contactViaTelegram"]
+                contact_via_telegram=res["contactViaTelegram"],
+                request_date=datetime.utcnow(),  # Текущее время и дата
+                details=None,  # Пример заполнения, может быть изменено
+                responsible_id=None,  # Ответственное лицо, может быть задано позже
+                status=ServiceRequestStatus.pending  # Начальный статус заявки
             )
             session.add(order_request)
             await session.commit()
@@ -137,13 +146,14 @@ async def web_order(message: Message, bot: Bot, state: FSMContext):
                 f"Телефон: {res['phone']}\n"
                 f"Email: {res['email']}\n"
                 f"Описание: {res['description']}\n"
-                f"Связь через Telegram: {contact_request}"
+                f"Связь через Telegram: {contact_request}\n"
+                f"Дата запроса: {order_request.request_date.strftime('%Y-%m-%d %H:%M')}"
             )
 
+            # Функция notify_admins_and_mods должна быть реализована для уведомления администраторов
             await notify_admins_and_mods(bot, session, admin_message)
-
         else:
-            await message.answer(f'Нажмите /start для регистрации')
+            await message.answer("Нажмите /start для регистрации.")
 
 
 async def notify_admins_and_mods(bot, session, message, include_moderators=True):
